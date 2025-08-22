@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App - Setup Your Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .background-wrapper {
+            background-color: #000000;
+            position: relative;
+            overflow: hidden;
+        }
+        .glow-effect {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(134, 25, 143, 0.3) 0%, rgba(76, 29, 149, 0) 60%);
+            pointer-events: none;
+        }
+        .btn-disabled {
+            background-color: #1f2937; /* bg-gray-800 */
+            color: #6b7280; /* text-gray-500 */
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="background-wrapper flex items-center justify-center h-screen text-gray-200">
+    <div class="glow-effect"></div>
+
+    <div class="w-full max-w-md p-8 space-y-6 bg-black/60 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl z-10">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">
+                Set Up Your Profile
+            </h1>
+            <p class="mt-2 text-sm text-gray-400">Just a few more details to get started.</p>
+        </div>
+
+        <form id="onboarding-form" class="space-y-6 pt-6">
+            <div>
+                <label for="name" class="text-sm font-medium text-gray-400">Full Name</label>
+                <input id="name" name="name" type="text" required
+                    class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition">
+            </div>
+            <div>
+                <label for="school" class="text-sm font-medium text-gray-400">School Name</label>
+                <input id="school" name="school" type="text" required
+                    class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition">
+            </div>
+            <div>
+                <label for="gradYear" class="text-sm font-medium text-gray-400">Graduation Year</label>
+                <input id="gradYear" name="gradYear" type="number" min="2020" max="2035" required
+                    class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition">
+            </div>
+            <div>
+                <button id="complete-profile-button" type="submit" disabled
+                    class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all btn-disabled">
+                    Complete Profile
+                </button>
+            </div>
+        </form>
+        
+        <!-- Message Box -->
+        <div id="message-box" class="hidden p-4 text-sm text-center rounded-lg" role="alert">
+            <span class="font-medium" id="message-text"></span>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFA-KDIFkqGmQ2fp9mz0tpwDOzcp_D93A",
+            authDomain: "phonechatban.firebaseapp.com",
+            projectId: "phonechatban",
+            storageBucket: "phonechatban.firebasestorage.app",
+            messagingSenderId: "987815128530",
+            appId: "1:987815128530:web:4a938c18fd910b8d7bac0b",
+            measurementId: "G-DVPM4KQ70Y"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const onboardingForm = document.getElementById('onboarding-form');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const nameInput = document.getElementById('name');
+        const schoolInput = document.getElementById('school');
+        const gradYearInput = document.getElementById('gradYear');
+        const completeProfileButton = document.getElementById('complete-profile-button');
+        let currentUser = null;
+
+        // --- Dynamic Button Logic ---
+        const baseButtonClasses = "w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all";
+        const activeClasses = "text-white bg-gradient-to-r from-teal-400 to-sky-500 hover:scale-105 transform";
+
+        function checkFormValidity() {
+            const isNameValid = nameInput.value.trim() !== '';
+            const isSchoolValid = schoolInput.value.trim() !== '';
+            const isGradYearValid = gradYearInput.value.length === 4;
+
+            if (isNameValid && isSchoolValid && isGradYearValid) {
+                completeProfileButton.disabled = false;
+                completeProfileButton.className = `${baseButtonClasses} ${activeClasses}`;
+            } else {
+                completeProfileButton.disabled = true;
+                completeProfileButton.className = `${baseButtonClasses} btn-disabled`;
+            }
+        }
+
+        nameInput.addEventListener('input', checkFormValidity);
+        schoolInput.addEventListener('input', checkFormValidity);
+        gradYearInput.addEventListener('input', checkFormValidity);
+
+        function showMessage(message) {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+            messageBox.className = 'p-4 text-sm text-center rounded-lg bg-red-900/50 text-red-300 border border-red-500/50';
+        }
+
+        // Listen for auth state changes to ensure we have a user
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+            } else {
+                // If no user is logged in, they shouldn't be here. Redirect to login.
+                window.location.href = './login.html';
+            }
+        });
+
+        onboardingForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (completeProfileButton.disabled) return;
+            if (!currentUser) {
+                showMessage("You are not logged in. Please return to the login page.");
+                return;
+            }
+
+            const name = nameInput.value;
+            const school = schoolInput.value;
+            const gradYear = gradYearInput.value;
+
+            // Create a document in the 'users' collection with the user's UID as the document ID
+            const userDocRef = doc(db, "users", currentUser.uid);
+
+            setDoc(userDocRef, {
+                uid: currentUser.uid,
+                email: currentUser.email,
+                displayName: name,
+                schoolName: school,
+                graduationYear: gradYear,
+                createdAt: new Date() // Good practice to store when the profile was made
+            })
+            .then(() => {
+                // Profile created successfully, now redirect to the main chat app
+                window.location.href = './chat.html';
+            })
+            .catch((error) => {
+                console.error("Error writing document: ", error);
+                showMessage("Error saving your profile. Please try again.");
+            });
+        });
+    </script>
+</body>
+</html>
