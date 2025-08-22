@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+        }
+        #chat-messages::-webkit-scrollbar { width: 4px; }
+        #chat-messages::-webkit-scrollbar-track { background: transparent; }
+        #chat-messages::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 20px; }
+        #user-list::-webkit-scrollbar { width: 4px; }
+        #user-list::-webkit-scrollbar-track { background: transparent; }
+        #user-list::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 20px; }
+        .sidebar { transition: transform 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden text-gray-200">
+
+    <!-- Sidebar (List of Chats) -->
+    <aside id="sidebar" class="bg-gray-900/70 backdrop-blur-xl w-80 flex-shrink-0 border-r border-gray-700/50 flex flex-col sidebar absolute lg:relative -translate-x-full lg:translate-x-0 z-20 h-full">
+        <!-- Sidebar Header -->
+        <div class="h-20 flex-shrink-0 px-6 flex items-center justify-between border-b border-gray-700/50">
+            <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-purple-500">Chats</h2>
+            <button id="logout-button" class="text-sm text-gray-400 hover:text-white transition">Logout</button>
+        </div>
+        <!-- User List -->
+        <div id="user-list" class="flex-1 overflow-y-auto p-4 space-y-2">
+            <p class="text-center text-gray-500 mt-4">Loading users...</p>
+        </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="flex-1 flex flex-col bg-black/80">
+        <!-- Header -->
+        <header class="bg-gray-900/70 backdrop-blur-xl h-20 flex-shrink-0 px-6 flex items-center border-b border-gray-700/50 z-10">
+             <button id="toggle-sidebar" class="mr-4 p-2 rounded-md hover:bg-gray-800 lg:hidden">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+            <h3 id="chat-with-name" class="text-xl font-semibold text-gray-200">Select a chat to start</h3>
+        </header>
+
+        <!-- Messages -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <div class="flex justify-center items-center h-full">
+                <p class="text-gray-500">Messages will appear here.</p>
+            </div>
+        </div>
+
+        <!-- Message Input -->
+        <div id="message-input-container" class="bg-gray-900/70 backdrop-blur-xl p-4 border-t border-gray-700/50 hidden">
+            <form id="message-form" class="flex items-center space-x-4">
+                <input id="message-input" type="text" placeholder="Type a message..." autocomplete="off"
+                    class="flex-1 w-full px-5 py-3 text-gray-200 bg-gray-800/70 border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                <button type="submit" class="p-3 bg-gradient-to-r from-fuchsia-500 to-purple-500 rounded-full text-white hover:scale-110 transform transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </button>
+            </form>
+        </div>
+    </main>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, doc, getDocs, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- Firebase Initialization ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFA-KDIFkqGmQ2fp9mz0tpwDOzcp_D93A",
+            authDomain: "phonechatban.firebaseapp.com",
+            projectId: "phonechatban",
+            storageBucket: "phonechatban.firebasestorage.app",
+            messagingSenderId: "987815128530",
+            appId: "1:987815128530:web:4a938c18fd910b8d7bac0b",
+            measurementId: "G-DVPM4KQ70Y"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- DOM Elements ---
+        const userList = document.getElementById('user-list');
+        const chatMessages = document.getElementById('chat-messages');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const messageInputContainer = document.getElementById('message-input-container');
+        const chatWithName = document.getElementById('chat-with-name');
+        const logoutButton = document.getElementById('logout-button');
+        const sidebar = document.getElementById('sidebar');
+        const toggleSidebar = document.getElementById('toggle-sidebar');
+
+        // --- State Variables ---
+        let currentUser = null;
+        let currentChatPartnerId = null;
+        let unsubscribeMessages = null;
+
+        // --- Auth Management ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                loadUsers();
+            } else {
+                window.location.href = './login.html';
+            }
+        });
+        
+        logoutButton.addEventListener('click', () => {
+            signOut(auth).catch(error => console.error("Logout failed:", error));
+        });
+
+        // --- UI Functions ---
+        toggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // --- Core Functions ---
+        async function loadUsers() {
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("uid", "!=", currentUser.uid));
+            
+            onSnapshot(q, (querySnapshot) => {
+                userList.innerHTML = ''; // Clear the list
+                querySnapshot.forEach((doc) => {
+                    const user = doc.data();
+                    const userElement = document.createElement('div');
+                    userElement.className = 'p-3 flex items-center space-x-4 cursor-pointer hover:bg-gray-800/50 rounded-lg transition';
+                    userElement.dataset.uid = user.uid;
+                    userElement.dataset.name = user.displayName;
+                    userElement.innerHTML = `
+                        <div class="w-12 h-12 bg-gradient-to-r from-teal-400 to-sky-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                            ${user.displayName.charAt(0)}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-200">${user.displayName}</p>
+                            <p class="text-sm text-gray-400">${user.schoolName}</p>
+                        </div>
+                    `;
+                    userElement.addEventListener('click', () => startChat(user.uid, user.displayName));
+                    userList.appendChild(userElement);
+                });
+            });
+        }
+
+        function startChat(partnerId, partnerName) {
+            currentChatPartnerId = partnerId;
+            chatWithName.textContent = `${partnerName}`;
+            messageInputContainer.classList.remove('hidden');
+            chatMessages.innerHTML = ''; 
+
+            if (window.innerWidth < 1024) { // lg breakpoint
+                sidebar.classList.add('-translate-x-full');
+            }
+
+            if (unsubscribeMessages) unsubscribeMessages();
+            
+            const channelId = [currentUser.uid, partnerId].sort().join('_');
+            const messagesRef = collection(db, "chats", channelId, "messages");
+            const q = query(messagesRef, orderBy("timestamp"));
+
+            unsubscribeMessages = onSnapshot(q, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const messageData = change.doc.data();
+                        displayMessage(messageData, change.doc.id);
+
+                        if (messageData.to === currentUser.uid && !messageData.isRead) {
+                            const msgRef = doc(db, "chats", channelId, "messages", change.doc.id);
+                            const deleteTime = Timestamp.fromMillis(Date.now() + 10 * 60 * 1000); // 10 minutes
+                            updateDoc(msgRef, {
+                                isRead: true,
+                                deleteAt: deleteTime
+                            }).catch(err => console.error("Error marking message as read:", err));
+                        }
+                    }
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+
+        function displayMessage(message, messageId) {
+            const isSentByMe = message.from === currentUser.uid;
+            const messageElement = document.createElement('div');
+            messageElement.id = `msg-${messageId}`;
+            messageElement.className = `flex items-end gap-2 ${isSentByMe ? 'justify-end' : 'justify-start'}`;
+            
+            const bubbleClass = isSentByMe 
+                ? 'bg-gradient-to-br from-fuchsia-600 to-purple-600 text-white' 
+                : 'bg-gray-800 text-gray-200';
+
+            messageElement.innerHTML = `
+                <div class="max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByMe ? 'rounded-br-lg' : 'rounded-bl-lg'} shadow-md">
+                    <p class="text-sm">${message.text}</p>
+                </div>
+            `;
+            chatMessages.appendChild(messageElement);
+        }
+
+        messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (text && currentChatPartnerId) {
+                const channelId = [currentUser.uid, currentChatPartnerId].sort().join('_');
+                const messagesRef = collection(db, "chats", channelId, "messages");
+                
+                addDoc(messagesRef, {
+                    text: text,
+                    from: currentUser.uid,
+                    to: currentChatPartnerId,
+                    timestamp: serverTimestamp(),
+                    isRead: false,
+                    deleteAt: null
+                }).catch(err => console.error("Error sending message:", err));
+
+                messageInput.value = '';
+            }
+        });
+    </script>
+</body>
+</html>
