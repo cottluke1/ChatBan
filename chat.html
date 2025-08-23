@@ -216,7 +216,7 @@
             userList.appendChild(userElement);
         }
 
-        // --- Add Friends Popover (NEW DESIGN) ---
+        // --- Add Friends Popover (REVISED & ROBUST) ---
         let requestsHtml = '';
         let searchHtml = '';
 
@@ -224,7 +224,6 @@
             const popoverContent = document.getElementById('popover-content');
             if (!popoverContent) return;
             
-            // Search results take priority
             if (searchHtml) {
                 popoverContent.innerHTML = searchHtml;
             } else if (requestsHtml) {
@@ -265,40 +264,53 @@
 
                 // Attach listener for search input
                 searchInput.addEventListener('input', async () => {
-                    const searchTerm = searchInput.value.trim().toLowerCase();
-                    if (searchTerm.length < 1) {
-                        searchHtml = '';
-                        renderPopoverContent();
-                        return;
-                    }
+                    try {
+                        const searchTerm = searchInput.value.trim().toLowerCase();
+                        if (searchTerm.length < 1) {
+                            searchHtml = '';
+                            renderPopoverContent();
+                            return;
+                        }
 
-                    if (!allUsersCache) {
-                        const usersSnapshot = await getDocs(collection(db, 'users'));
-                        allUsersCache = usersSnapshot.docs.map(doc => doc.data());
-                    }
+                        if (!allUsersCache) {
+                            const usersSnapshot = await getDocs(collection(db, 'users'));
+                            allUsersCache = usersSnapshot.docs.map(doc => doc.data());
+                        }
 
-                    const friendsSnap = await getDocs(collection(db, `users/${currentUser.uid}/friends`));
-                    const sentReqSnap = await getDocs(collection(db, `users/${currentUser.uid}/sentFriendRequests`));
-                    const receivedReqSnap = await getDocs(collection(db, `users/${currentUser.uid}/friendRequests`));
-                    const excludedIds = new Set([currentUser.uid, ...friendsSnap.docs.map(d=>d.id), ...sentReqSnap.docs.map(d=>d.id), ...receivedReqSnap.docs.map(d=>d.id)]);
+                        const friendsSnap = await getDocs(collection(db, `users/${currentUser.uid}/friends`));
+                        const sentReqSnap = await getDocs(collection(db, `users/${currentUser.uid}/sentFriendRequests`));
+                        const receivedReqSnap = await getDocs(collection(db, `users/${currentUser.uid}/friendRequests`));
+                        const excludedIds = new Set([currentUser.uid, ...friendsSnap.docs.map(d=>d.id), ...sentReqSnap.docs.map(d=>d.id), ...receivedReqSnap.docs.map(d=>d.id)]);
 
-                    const results = allUsersCache.filter(user => !excludedIds.has(user.uid) && (user.username.toLowerCase().includes(searchTerm) || user.displayName.toLowerCase().includes(searchTerm)));
-
-                    if (results.length === 0) {
-                        searchHtml = '<p class="text-gray-400 text-sm p-4">No users found.</p>';
-                    } else {
-                        let userItems = '';
-                        results.forEach(user => {
-                            let pfp = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor}">${user.displayName.charAt(0).toUpperCase()}</div>`;
-                            userItems += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg">
-                                <div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${user.displayName}</p><p class="text-xs text-gray-400">@${user.username}</p></div></div>
-                                <button class="add-friend-btn text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-md" data-uid="${user.uid}">Add</button>
-                            </div>`;
+                        const results = allUsersCache.filter(user => {
+                            const displayName = user.displayName || '';
+                            const username = user.username || '';
+                            if (excludedIds.has(user.uid)) return false;
+                            
+                            return username.toLowerCase().includes(searchTerm) || 
+                                   displayName.toLowerCase().includes(searchTerm);
                         });
-                        searchHtml = `<div class="p-2 text-left">${userItems}</div>`;
+
+                        if (results.length === 0) {
+                            searchHtml = '<p class="text-gray-400 text-sm p-4">No users found.</p>';
+                        } else {
+                            let userItems = '';
+                            results.forEach(user => {
+                                let pfp = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor}">${user.displayName.charAt(0).toUpperCase()}</div>`;
+                                userItems += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg">
+                                    <div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${user.displayName}</p><p class="text-xs text-gray-400">@${user.username}</p></div></div>
+                                    <button class="add-friend-btn text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-md" data-uid="${user.uid}">Add</button>
+                                </div>`;
+                            });
+                            searchHtml = `<div class="p-2 text-left">${userItems}</div>`;
+                        }
+                    } catch (error) {
+                        console.error("Error during user search:", error);
+                        searchHtml = '<p class="text-red-400 text-sm p-4">Could not perform search.</p>';
                     }
                     renderPopoverContent();
                 });
+
 
                 // Attach listener for button clicks inside popover
                 popoverContent.addEventListener('click', async (e) => {
