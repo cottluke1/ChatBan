@@ -40,7 +40,7 @@
                     <div id="add-friends-popover" class="hidden absolute top-full right-0 mt-2 w-80 rounded-xl shadow-lg z-50" style="background-color: #262626;">
                         <div class="p-2">
                             <div class="relative">
-                                <input type="text" id="user-search-input" placeholder="Search..." autocomplete="off" class="w-full pl-9 pr-4 py-2 border-transparent rounded-lg focus:outline-none text-white" style="background-color: #3a3a3a;">
+                                <input type="text" id="user-search-input" placeholder="Search by username..." autocomplete="off" class="w-full pl-9 pr-4 py-2 border-transparent rounded-lg focus:outline-none text-white" style="background-color: #3a3a3a;">
                                 <svg class="w-5 h-5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                             </div>
                         </div>
@@ -124,6 +124,7 @@
         let currentUserData = null;
         let currentChatPartner = null;
         let allUsersCache = null;
+        let relationshipsUnsubscribe = null; // To detach old listeners
 
         // --- Auth & Initial Load ---
         onAuthStateChanged(auth, async (user) => {
@@ -138,6 +139,8 @@
                          window.location.href = './onboarding.html';
                     }
                 });
+                 // Detach any previous listener before attaching a new one
+                if (relationshipsUnsubscribe) relationshipsUnsubscribe();
                 listenForRelationships();
             } else {
                 window.location.href = './login.html';
@@ -160,53 +163,93 @@
         // --- Relationship & UI Management ---
         function listenForRelationships() {
             const relationshipsRef = collection(db, `users/${currentUser.uid}/relationships`);
-            onSnapshot(query(relationshipsRef, orderBy("timestamp", "desc")), (snapshot) => {
-                userList.innerHTML = '';
-                let hasRequests = false;
-                if (snapshot.empty) {
-                    userList.innerHTML = `<div class="text-center p-4 text-gray-400">No friends yet. Add one!</div>`;
-                } else {
-                    snapshot.forEach(doc => {
-                        const relationship = doc.data();
-                        if (relationship.status === 'received') hasRequests = true;
-                        renderUserInList(relationship);
-                    });
-                }
-                notificationDot.classList.toggle('hidden', !hasRequests);
+            relationshipsUnsubscribe = onSnapshot(query(relationshipsRef, orderBy("timestamp", "desc")), (snapshot) => {
+                const friendRequests = [];
+                const friends = [];
+                
+                snapshot.forEach(doc => {
+                    const relationship = { id: doc.id, ...doc.data() };
+                    if (relationship.status === 'friends') {
+                        friends.push(relationship);
+                    } else if (relationship.status === 'received' || relationship.status === 'sent') {
+                        friendRequests.push(relationship);
+                    }
+                });
+                
+                updateUserListUI(friends, friendRequests);
+                notificationDot.classList.toggle('hidden', !friendRequests.some(r => r.status === 'received'));
             });
         }
+
+        function updateUserListUI(friends, requests) {
+            userList.innerHTML = ''; // Clear the list before re-rendering
+            
+            if (friends.length === 0 && requests.length === 0) {
+                 userList.innerHTML = `<div class="text-center p-4 text-gray-400">No friends yet. Add one!</div>`;
+                 return;
+            }
+
+            // Render friends first
+            if (friends.length > 0) {
+                friends.forEach(friend => renderUserInList(friend));
+            }
+            
+            // Render requests below friends
+            if (requests.length > 0) {
+                // Optional: Add a separator
+                if (friends.length > 0) {
+                    userList.innerHTML += `<div class="px-4 py-2 text-xs font-bold text-gray-400 uppercase">Requests</div>`;
+                }
+                requests.forEach(req => renderUserInList(req));
+            }
+        }
+
 
         function renderUserInList(relationship) {
             const { userData, status } = relationship;
             const userElement = document.createElement('div');
             userElement.className = 'p-2 flex items-center justify-between cursor-pointer themed-hover rounded-lg transition';
+            userElement.dataset.uid = userData.uid;
             
             let pfpHtml = userData.photoURL ? `<img src="${userData.photoURL}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white ${userData.pfpColor}">${(userData.displayName || '?').charAt(0).toUpperCase()}</div>`;
             
             let statusHtml = '';
             switch (status) {
                 case 'sent':
-                    statusHtml = `<p class="text-sm text-gray-400">Friend Request Sent</p>`;
+                    statusHtml = `<div class="text-right"><p class="text-sm text-gray-400">Request Sent</p></div>`;
+                    userElement.classList.replace('cursor-pointer', 'cursor-default');
                     break;
                 case 'received':
-                    statusHtml = `<p class="text-sm text-blue-400">Friend Request</p>`;
+                    statusHtml = `<div class="flex gap-2">
+                                    <button class="accept-req-btn-sidebar text-xs bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-md" data-uid="${userData.uid}">Accept</button>
+                                  </div>`;
                     break;
                 case 'friends':
-                    statusHtml = `<p class="text-sm text-gray-400">New Friend!</p>`;
+                    // We can add last message preview here later
+                    statusHtml = ``; 
                     break;
             }
 
             userElement.innerHTML = `
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4 flex-grow">
                     ${pfpHtml}
                     <div>
                         <p class="font-semibold text-white">${userData.displayName}</p>
-                        ${statusHtml}
+                        <p class="text-sm text-gray-400">@${userData.username}</p>
                     </div>
-                </div>`;
+                </div>
+                ${statusHtml}`;
 
             if (status === 'friends') {
                  userElement.addEventListener('click', () => startChat(userData));
+            } else if (status === 'received') {
+                const acceptBtn = userElement.querySelector('.accept-req-btn-sidebar');
+                acceptBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation(); // Prevent parent click
+                    acceptBtn.textContent = '...';
+                    acceptBtn.disabled = true;
+                    await acceptFriendRequest(userData.uid);
+                });
             }
             userList.appendChild(userElement);
         }
@@ -220,12 +263,30 @@
             }
         });
 
-        function initializePopover() {
+        async function initializePopover() {
             const searchInput = document.getElementById('user-search-input');
             const popoverContent = document.getElementById('popover-content');
 
             const render = (html) => popoverContent.innerHTML = html;
-            render('<p class="text-gray-400 text-sm p-4">New friend requests will appear here</p>');
+            
+            // Fetch and display incoming friend requests first
+            const requestsQuery = query(collection(db, `users/${currentUser.uid}/relationships`), where("status", "==", "received"));
+            const requestSnapshot = await getDocs(requestsQuery);
+            
+            let requestHtml = '';
+            if (!requestSnapshot.empty) {
+                requestSnapshot.docs.forEach(doc => {
+                    const req = doc.data();
+                    const pfp = req.userData.photoURL ? `<img src="${req.userData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${req.userData.pfpColor}">${req.userData.displayName.charAt(0).toUpperCase()}</div>`;
+                    requestHtml += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg" data-uid="${req.userData.uid}">
+                        <div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${req.userData.displayName}</p><p class="text-xs text-gray-400">@${req.userData.username}</p></div></div>
+                        <button class="accept-req-btn text-sm bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md" data-uid="${req.userData.uid}">Accept</button>
+                    </div>`;
+                });
+                 render(`<div class="p-2 text-left">${requestHtml}</div>`);
+            } else {
+                 render('<p class="text-gray-400 text-sm p-4">Search for users to add them.</p>');
+            }
 
             // Listener for button clicks inside popover
             popoverContent.addEventListener('click', async (e) => {
@@ -235,24 +296,28 @@
                 const recipientId = target.dataset.uid;
                 if (target.matches('.add-friend-btn')) {
                     target.disabled = true;
-                    await sendFriendRequest(recipientId);
                     target.textContent = 'Sent';
                     target.classList.replace('bg-gray-600', 'bg-gray-800');
+                    await sendFriendRequest(recipientId);
                 } else if (target.matches('.accept-req-btn')) {
+                    target.disabled = true;
+                    target.textContent = 'Accepted';
                     await acceptFriendRequest(recipientId);
-                    target.closest('.request-item').remove();
+                    // Remove the item from the popover
+                    target.closest('[data-uid]').remove();
                 }
             });
 
             // Search functionality
             searchInput.addEventListener('input', async () => {
                 const searchTerm = searchInput.value.trim().toLowerCase();
-                if (searchTerm.length < 1) {
-                    render('<p class="text-gray-400 text-sm p-4">New friend requests will appear here</p>');
+                if (searchTerm.length < 2) {
+                    initializePopover(); // Reset to default view
                     return;
                 }
                 
                 try {
+                    // Cache all users on first search to reduce reads
                     if (!allUsersCache) {
                         const usersSnapshot = await getDocs(collection(db, 'users'));
                         allUsersCache = usersSnapshot.docs.map(doc => doc.data());
@@ -280,42 +345,52 @@
                         render(`<div class="p-2 text-left">${userItems}</div>`);
                     }
                 } catch (error) {
+                    console.error("Search Error: ", error);
                     render('<p class="text-red-400 text-sm p-4">Could not perform search.</p>');
                 }
             });
         }
         
         async function sendFriendRequest(recipientId) {
-            const recipientDoc = await getDoc(doc(db, 'users', recipientId));
-            if (!recipientDoc.exists()) return;
+            try {
+                const recipientDocSnap = await getDoc(doc(db, 'users', recipientId));
+                if (!recipientDocSnap.exists()) throw new Error("User not found");
 
-            const batch = writeBatch(db);
-            const timestamp = serverTimestamp();
-            
-            // For sender
-            const senderRef = doc(db, `users/${currentUser.uid}/relationships/${recipientId}`);
-            batch.set(senderRef, { status: 'sent', userData: recipientDoc.data(), timestamp });
-            
-            // For recipient
-            const recipientRef = doc(db, `users/${recipientId}/relationships/${currentUser.uid}`);
-            batch.set(recipientRef, { status: 'received', userData: currentUserData, timestamp });
+                const batch = writeBatch(db);
+                const timestamp = serverTimestamp();
+                
+                // My relationship doc (sender)
+                const senderRef = doc(db, `users/${currentUser.uid}/relationships/${recipientId}`);
+                batch.set(senderRef, { status: 'sent', userData: recipientDocSnap.data(), timestamp });
+                
+                // Their relationship doc (recipient)
+                const recipientRef = doc(db, `users/${recipientId}/relationships/${currentUser.uid}`);
+                batch.set(recipientRef, { status: 'received', userData: currentUserData, timestamp });
 
-            await batch.commit();
+                await batch.commit();
+            } catch (error) {
+                console.error("Error sending friend request:", error);
+                // Optionally show an error to the user
+            }
         }
 
         async function acceptFriendRequest(friendId) {
-            const batch = writeBatch(db);
-            const timestamp = serverTimestamp();
-            
-            // Update my relationship doc
-            const myRef = doc(db, `users/${currentUser.uid}/relationships/${friendId}`);
-            batch.update(myRef, { status: 'friends', timestamp });
-            
-            // Update their relationship doc
-            const friendRef = doc(db, `users/${friendId}/relationships/${currentUser.uid}`);
-            batch.update(friendRef, { status: 'friends', timestamp });
-            
-            await batch.commit();
+            try {
+                const batch = writeBatch(db);
+                const timestamp = serverTimestamp();
+                
+                // Update my relationship doc
+                const myRef = doc(db, `users/${currentUser.uid}/relationships/${friendId}`);
+                batch.update(myRef, { status: 'friends', timestamp });
+                
+                // Update their relationship doc
+                const friendRef = doc(db, `users/${friendId}/relationships/${currentUser.uid}`);
+                batch.update(friendRef, { status: 'friends', timestamp });
+                
+                await batch.commit();
+            } catch (error) {
+                console.error("Error accepting friend request:", error);
+            }
         }
 
         // --- Chat Logic ---
