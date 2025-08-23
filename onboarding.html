@@ -57,7 +57,7 @@
             <div class="space-y-6 pt-6">
                 <div>
                     <label for="username" class="text-sm font-medium text-gray-400">Username</label>
-                    <input id="username" type="text" required class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    <input id="username" type="text" required autocapitalize="none" class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
                     <p id="username-status" class="text-xs mt-1 h-4"></p>
                 </div>
                 <div>
@@ -68,10 +68,10 @@
             </div>
         </div>
 
-        <!-- Step 2: School & Grad Year -->
+        <!-- Step 2: School, Grad Year, Bio -->
         <div id="step-2" class="step">
             <div class="text-center">
-                <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">School Information</h1>
+                <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">Tell Us More</h1>
                 <p class="mt-2 text-sm text-gray-400">This helps you connect with classmates.</p>
             </div>
             <div class="space-y-6 pt-6">
@@ -84,6 +84,11 @@
                     <select id="gradYear" required class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
                         <option value="" disabled selected>Select Year</option>
                     </select>
+                </div>
+                 <div>
+                    <label for="bio" class="text-sm font-medium text-gray-400">Bio</label>
+                    <textarea id="bio" maxlength="100" class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500" rows="2"></textarea>
+                    <p id="bio-char-count" class="text-xs text-right text-gray-500 mt-1">0 / 100</p>
                 </div>
                 <div class="flex gap-4">
                     <button id="back-2" class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg bg-gray-700 hover:bg-gray-600 transition-all">Back</button>
@@ -98,30 +103,29 @@
                 <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">Looks good?</h1>
                 <p class="mt-2 text-sm text-gray-400">Confirm your details below.</p>
             </div>
-            <div class="space-y-4 pt-6">
-                <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 bg-gradient-to-br from-fuchsia-600 to-purple-600 rounded-full flex-shrink-0"></div>
-                    <div class="w-full space-y-2">
-                        <div class="flex justify-between items-center">
-                            <p><strong class="text-gray-400">Username:</strong> <span id="confirm-username"></span></p>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <p><strong class="text-gray-400">Display Name:</strong> <span id="confirm-displayName"></span></p>
-                            <button data-field="displayName" class="edit-btn p-1 text-gray-500 hover:text-white"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg></button>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <p><strong class="text-gray-400">School:</strong> <span id="confirm-school"></span></p>
-                             <button data-field="school" class="edit-btn p-1 text-gray-500 hover:text-white"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg></button>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <p><strong class="text-gray-400">Grad Year:</strong> <span id="confirm-gradYear"></span></p>
-                             <button data-field="gradYear" class="edit-btn p-1 text-gray-500 hover:text-white"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg></button>
-                        </div>
+            <div class="space-y-6 pt-6">
+                <div class="flex items-center gap-6">
+                    <div class="w-24 h-24 flex-shrink-0">
+                        <label for="pfp-upload" class="cursor-pointer group">
+                            <img id="confirm-pfp-preview" src="" class="w-full h-full rounded-full object-cover border-2 border-fuchsia-500/50 group-hover:border-fuchsia-500 transition">
+                            <div id="confirm-pfp-initial" class="w-full h-full rounded-full bg-gradient-to-br from-fuchsia-600 to-purple-600 flex items-center justify-center text-4xl font-bold text-white group-hover:opacity-80 transition"></div>
+                        </label>
+                        <input type="file" id="pfp-upload" class="hidden" accept="image/png, image/jpeg">
+                    </div>
+                    <div class="w-full space-y-2 text-sm">
+                        <p><strong class="text-gray-400">Username:</strong> <span id="confirm-username"></span></p>
+                        <p><strong class="text-gray-400">Display Name:</strong> <span id="confirm-displayName"></span></p>
+                        <p><strong class="text-gray-400">School:</strong> <span id="confirm-school"></span></p>
+                        <p><strong class="text-gray-400">Grad Year:</strong> <span id="confirm-gradYear"></span></p>
                     </div>
                 </div>
-                <div class="flex gap-4 pt-4">
+                 <div>
+                    <p class="text-gray-400 text-sm">Bio:</p>
+                    <p id="confirm-bio" class="text-sm mt-1 p-2 bg-gray-900/50 rounded-md min-h-[40px]"></p>
+                </div>
+                <div class="flex gap-4 pt-2">
                     <button id="back-3" class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg bg-gray-700 hover:bg-gray-600 transition-all">Back</button>
-                    <button id="continue-3" class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all text-white bg-gradient-to-r from-teal-400 to-sky-500">Finish</button>
+                    <button id="continue-3" class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all text-white bg-gradient-to-r from-teal-400 to-sky-500">Finish Setup</button>
                 </div>
             </div>
         </div>
@@ -131,6 +135,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAFA-KDIFkqGmQ2fp9mz0tpwDOzcp_D93A",
@@ -145,10 +150,11 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         // --- State Management ---
         let currentUser = null;
-        let onboardingData = {};
+        let onboardingData = { profilePictureFile: null };
         let isUsernameAvailable = false;
         let usernameCheckTimeout;
 
@@ -159,6 +165,9 @@
         const displayNameInput = document.getElementById('displayName');
         const schoolInput = document.getElementById('school');
         const gradYearSelect = document.getElementById('gradYear');
+        const bioInput = document.getElementById('bio');
+        const bioCharCount = document.getElementById('bio-char-count');
+        const pfpUploadInput = document.getElementById('pfp-upload');
         const continue1Btn = document.getElementById('continue-1');
         const continue2Btn = document.getElementById('continue-2');
         const continue3Btn = document.getElementById('continue-3');
@@ -180,24 +189,27 @@
         continue2Btn.addEventListener('click', () => {
             onboardingData.schoolName = schoolInput.value;
             onboardingData.graduationYear = gradYearSelect.value;
+            onboardingData.bio = bioInput.value;
             populateConfirmation();
             goToStep(3);
         });
         back3Btn.addEventListener('click', () => goToStep(2));
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const field = e.currentTarget.dataset.field;
-                if (field === 'displayName') goToStep(1);
-                else goToStep(2);
-            });
-        });
-
+        
         // --- Populate Confirmation ---
         function populateConfirmation() {
             document.getElementById('confirm-username').textContent = onboardingData.username;
             document.getElementById('confirm-displayName').textContent = onboardingData.displayName;
             document.getElementById('confirm-school').textContent = onboardingData.schoolName;
             document.getElementById('confirm-gradYear').textContent = onboardingData.graduationYear;
+            document.getElementById('confirm-bio').textContent = onboardingData.bio || "No bio yet.";
+            
+            const pfpInitial = document.getElementById('confirm-pfp-initial');
+            pfpInitial.textContent = (onboardingData.displayName || '?').charAt(0).toUpperCase();
+
+            if (!onboardingData.profilePictureFile) {
+                pfpInitial.style.display = 'flex';
+                document.getElementById('confirm-pfp-preview').style.display = 'none';
+            }
         }
 
         // --- Populate Grad Year ---
@@ -212,7 +224,7 @@
         async function checkUsername() {
             const username = usernameInput.value.toLowerCase().trim();
             if (username.length < 3 || !/^[a-z0-9_.]+$/.test(username)) {
-                usernameStatus.textContent = '3+ characters, letters, numbers, _, .';
+                usernameStatus.textContent = '3+ chars, lowercase, numbers, _, .';
                 usernameStatus.className = 'text-xs mt-1 h-4 text-yellow-500';
                 isUsernameAvailable = false;
                 validateStep1();
@@ -261,11 +273,30 @@
 
         usernameInput.addEventListener('input', () => {
             clearTimeout(usernameCheckTimeout);
-            usernameCheckTimeout = setTimeout(checkUsername, 500); // Debounce
+            usernameCheckTimeout = setTimeout(checkUsername, 500);
         });
         displayNameInput.addEventListener('input', validateStep1);
         schoolInput.addEventListener('input', validateStep2);
         gradYearSelect.addEventListener('change', validateStep2);
+        bioInput.addEventListener('input', () => {
+            bioCharCount.textContent = `${bioInput.value.length} / 100`;
+        });
+
+        // --- PFP Upload ---
+        pfpUploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                onboardingData.profilePictureFile = file;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const preview = document.getElementById('confirm-pfp-preview');
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    document.getElementById('confirm-pfp-initial').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 
         // --- Auth & Final Submission ---
         onAuthStateChanged(auth, (user) => {
@@ -278,11 +309,20 @@
 
         continue3Btn.addEventListener('click', async () => {
             if (!currentUser) return alert("Error: Not logged in.");
+            continue3Btn.disabled = true;
+            continue3Btn.textContent = 'Saving...';
             
             try {
+                let photoURL = null;
+                if (onboardingData.profilePictureFile) {
+                    const filePath = `profilePictures/${currentUser.uid}/${onboardingData.profilePictureFile.name}`;
+                    const storageRef = ref(storage, filePath);
+                    const snapshot = await uploadBytes(storageRef, onboardingData.profilePictureFile);
+                    photoURL = await getDownloadURL(snapshot.ref);
+                }
+
                 const batch = writeBatch(db);
                 
-                // 1. Set the user document
                 const userDocRef = doc(db, "users", currentUser.uid);
                 batch.set(userDocRef, {
                     uid: currentUser.uid,
@@ -291,14 +331,14 @@
                     displayName: onboardingData.displayName,
                     schoolName: onboardingData.schoolName,
                     graduationYear: onboardingData.graduationYear,
+                    bio: onboardingData.bio || '',
+                    photoURL: photoURL,
                     createdAt: new Date()
                 });
 
-                // 2. Set the username document to enforce uniqueness
                 const usernameDocRef = doc(db, "usernames", onboardingData.username);
                 batch.set(usernameDocRef, { uid: currentUser.uid });
 
-                // Commit the batch
                 await batch.commit();
                 
                 window.location.href = './chat.html';
@@ -306,6 +346,8 @@
             } catch (error) {
                 console.error("Error saving profile: ", error);
                 alert("Could not save profile. The username might have been taken. Please go back and try another.");
+                continue3Btn.disabled = false;
+                continue3Btn.textContent = 'Finish Setup';
             }
         });
 
