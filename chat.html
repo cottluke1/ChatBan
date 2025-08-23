@@ -83,7 +83,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, doc, getDoc, updateDoc, writeBatch, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, doc, getDoc, updateDoc, writeBatch, getDocs, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAFA-KDIFkqGmQ2fp9mz0tpwDOzcp_D9A",
@@ -122,21 +122,23 @@
         let currentChatPartner = null;
         let allUsersCache = null;
 
-        // --- Auth & Initial Load ---
+        // --- Auth & Initial Load (STABLE VERSION) ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
                 const userDocRef = doc(db, "users", user.uid);
-                onSnapshot(userDocRef, (doc) => {
-                    if (doc.exists()) {
-                        currentUserData = doc.data();
-                        loadMyProfile(currentUserData);
-                    } else {
-                        window.location.href = './onboarding.html';
-                    }
-                });
-                listenForFriends();
+                const userDocSnap = await getDoc(userDocRef);
+
+                if (userDocSnap.exists()) {
+                    currentUserData = userDocSnap.data();
+                    loadMyProfile(currentUserData);
+                    listenForFriendsAndRequests();
+                } else {
+                    // This is a new user who hasn't completed onboarding.
+                    window.location.href = './onboarding.html';
+                }
             } else {
+                // No user is signed in.
                 window.location.href = './login.html';
             }
         });
@@ -145,75 +147,57 @@
             if (userData.photoURL) {
                 myPfpSidebar.src = userData.photoURL;
                 myPfpSidebar.classList.remove('hidden');
-                myPfpInitialSidebar.classList.add('hidden');
             } else {
                 myPfpInitialSidebar.textContent = (userData.displayName || '?').charAt(0).toUpperCase();
-                myPfpInitialSidebar.className = `w-10 h-10 rounded-full flex items-center justify-center font-bold text-white`;
+                myPfpInitialSidebar.classList.remove('hidden');
             }
         }
         
-        // --- Friend System (NEW ARCHITECTURE) ---
-        async function listenForFriends() {
-            const friendsQuery = query(collection(db, "friends"), where("users", "array-contains", currentUser.uid));
-            
-            onSnapshot(friendsQuery, async (snapshot) => {
-                const friendList = [];
-                let hasPendingRequest = false;
+        // --- Friend System (Sub-collection Architecture) ---
+        function listenForFriendsAndRequests() {
+            const friendsRef = collection(db, `users/${currentUser.uid}/friends`);
+            onSnapshot(query(friendsRef, orderBy("timestamp", "desc")), (snapshot) => {
+                const allRelations = [];
+                snapshot.forEach(doc => {
+                    allRelations.push({ id: doc.id, ...doc.data() });
+                });
+                renderFriendList(allRelations);
+            });
 
-                for (const doc of snapshot.docs) {
-                    const friendData = doc.data();
-                    const otherUserId = friendData.users.find(id => id !== currentUser.uid);
-                    
-                    const userDoc = await getDoc(doc(db, "users", otherUserId));
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        let statusText = '';
-                        let isClickable = false;
-
-                        if (friendData.status === 'pending') {
-                            if (friendData.requester === currentUser.uid) {
-                                statusText = 'Friend Request Sent';
-                            } else {
-                                statusText = 'Friend Request';
-                                hasPendingRequest = true;
-                            }
-                        } else if (friendData.status === 'friends') {
-                            statusText = 'New Friend!';
-                            isClickable = true;
-                        }
-                        
-                        friendList.push({ ...userData, statusText, isClickable });
-                    }
-                }
-                
-                renderFriendList(friendList);
-                notificationDot.classList.toggle('hidden', !hasPendingRequest);
+            const requestsRef = collection(db, `users/${currentUser.uid}/friendRequests`);
+            onSnapshot(requestsRef, (snapshot) => {
+                notificationDot.classList.toggle('hidden', snapshot.empty);
             });
         }
 
-        function renderFriendList(friends) {
+        function renderFriendList(relations) {
             userList.innerHTML = '';
-            if (friends.length === 0) {
+            if (relations.length === 0) {
                 userList.innerHTML = `<div class="text-center p-4 text-gray-400">No friends yet. Add one!</div>`;
                 return;
             }
-            friends.forEach(friend => {
+            relations.forEach(relation => {
                 const userElement = document.createElement('div');
-                userElement.className = `p-2 flex items-center justify-between rounded-lg transition ${friend.isClickable ? 'cursor-pointer themed-hover' : ''}`;
+                const isClickable = relation.status === 'friends';
+                userElement.className = `p-2 flex items-center justify-between rounded-lg transition ${isClickable ? 'cursor-pointer themed-hover' : ''}`;
                 
-                let pfpHtml = friend.photoURL ? `<img src="${friend.photoURL}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white">${(friend.displayName || '?').charAt(0).toUpperCase()}</div>`;
+                let pfpHtml = relation.userData.photoURL ? `<img src="${relation.userData.photoURL}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white">${(relation.userData.displayName || '?').charAt(0).toUpperCase()}</div>`;
+                
+                let statusText = '';
+                if (relation.status === 'sent') statusText = 'Request Sent';
+                else if (relation.status === 'friends') statusText = 'New Friend!';
 
                 userElement.innerHTML = `
                     <div class="flex items-center gap-4">
                         ${pfpHtml}
                         <div>
-                            <p class="font-semibold text-white">${friend.displayName}</p>
-                            <p class="text-sm ${friend.statusText === 'Friend Request' ? 'text-blue-400' : 'text-gray-400'}">${friend.statusText}</p>
+                            <p class="font-semibold text-white">${relation.userData.displayName}</p>
+                            <p class="text-sm text-gray-400">${statusText}</p>
                         </div>
                     </div>`;
 
-                if (friend.isClickable) {
-                    userElement.addEventListener('click', () => startChat(friend));
+                if (isClickable) {
+                    userElement.addEventListener('click', () => startChat(relation.userData));
                 }
                 userList.appendChild(userElement);
             });
@@ -231,35 +215,25 @@
         async function initializePopover() {
             const searchInput = document.getElementById('user-search-input');
             const popoverContent = document.getElementById('popover-content');
-
             const render = (html) => popoverContent.innerHTML = html;
-            
-            // Display pending requests on open
-            const requestsQuery = query(collection(db, "friends"), where("users", "array-contains", currentUser.uid), where("status", "==", "pending"));
-            const requestSnapshot = await getDocs(requestsQuery);
+
+            const requestsRef = collection(db, `users/${currentUser.uid}/friendRequests`);
+            const requestSnapshot = await getDocs(requestsRef);
             let requestItems = '';
-            for (const docSnap of requestSnapshot.docs) {
-                const request = docSnap.data();
-                if (request.requester !== currentUser.uid) {
-                    const requesterId = request.requester;
-                    const userDoc = await getDoc(doc(db, "users", requesterId));
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        let pfp = userData.photoURL ? `<img src="${userData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white">${userData.displayName.charAt(0).toUpperCase()}</div>`;
-                        requestItems += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg">
-                            <div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><p class="font-semibold">${userData.displayName}</p></div>
-                            <button class="accept-req-btn text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md" data-doc-id="${docSnap.id}">Accept</button>
-                        </div>`;
-                    }
-                }
-            }
+            requestSnapshot.forEach(doc => {
+                const req = doc.data();
+                let pfp = req.userData.photoURL ? `<img src="${req.userData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white">${req.userData.displayName.charAt(0).toUpperCase()}</div>`;
+                requestItems += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg">
+                    <div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><p class="font-semibold">${req.userData.displayName}</p></div>
+                    <button class="accept-req-btn text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md" data-uid="${doc.id}">Accept</button>
+                </div>`;
+            });
             render(requestItems || '<p class="text-gray-400 text-sm p-4">New friend requests will appear here</p>');
 
-            // Search functionality
             searchInput.addEventListener('input', async () => {
                 const searchTerm = searchInput.value.trim().toLowerCase();
                 if (searchTerm.length < 1) {
-                    initializePopover(); // Re-show requests if search is cleared
+                    initializePopover();
                     return;
                 }
                 
@@ -268,8 +242,8 @@
                     allUsersCache = usersSnapshot.docs.map(doc => doc.data());
                 }
 
-                const friendsSnap = await getDocs(query(collection(db, "friends"), where("users", "array-contains", currentUser.uid)));
-                const excludedIds = new Set([currentUser.uid, ...friendsSnap.docs.map(d => d.data().users.find(id => id !== currentUser.uid))]);
+                const friendsSnap = await getDocs(collection(db, `users/${currentUser.uid}/friends`));
+                const excludedIds = new Set([currentUser.uid, ...friendsSnap.docs.map(d => d.id)]);
 
                 const results = allUsersCache.filter(user => !excludedIds.has(user.uid) && (user.username.toLowerCase().includes(searchTerm) || user.displayName.toLowerCase().includes(searchTerm)));
 
@@ -288,7 +262,6 @@
                 }
             });
 
-            // Event delegation for buttons
             popoverContent.addEventListener('click', async (e) => {
                 const target = e.target.closest('button');
                 if (!target) return;
@@ -299,29 +272,52 @@
                     target.textContent = 'Sent';
                     target.classList.replace('bg-gray-600', 'bg-gray-800');
                 } else if (target.matches('.accept-req-btn')) {
-                    await acceptFriendRequest(target.dataset.docId);
+                    await acceptFriendRequest(target.dataset.uid);
                     target.closest('.p-2').remove();
                 }
             });
         }
 
         async function sendFriendRequest(recipientId) {
-            const friendDocId = [currentUser.uid, recipientId].sort().join('_');
-            const friendRef = doc(db, "friends", friendDocId);
-            await setDoc(friendRef, {
-                users: [currentUser.uid, recipientId],
-                requester: currentUser.uid,
-                status: 'pending',
-                timestamp: serverTimestamp()
-            });
+            const recipientDoc = await getDoc(doc(db, 'users', recipientId));
+            if (!recipientDoc.exists()) return;
+            const recipientData = recipientDoc.data();
+
+            const batch = writeBatch(db);
+            const timestamp = serverTimestamp();
+
+            // For sender: create a 'sent' record in their friends sub-collection
+            const senderFriendRef = doc(db, `users/${currentUser.uid}/friends/${recipientId}`);
+            batch.set(senderFriendRef, { status: 'sent', userData: recipientData, timestamp });
+
+            // For recipient: create a request in their friendRequests sub-collection
+            const recipientRequestRef = doc(db, `users/${recipientId}/friendRequests/${currentUser.uid}`);
+            batch.set(recipientRequestRef, { userData: currentUserData, timestamp });
+
+            await batch.commit();
         }
 
-        async function acceptFriendRequest(docId) {
-            const friendRef = doc(db, "friends", docId);
-            await updateDoc(friendRef, {
-                status: 'friends',
-                timestamp: serverTimestamp()
-            });
+        async function acceptFriendRequest(requesterId) {
+            const requesterDoc = await getDoc(doc(db, 'users', requesterId));
+            if (!requesterDoc.exists()) return;
+            const requesterData = requesterDoc.data();
+
+            const batch = writeBatch(db);
+            const timestamp = serverTimestamp();
+
+            // For me (the acceptor): create a 'friends' record
+            const myFriendRef = doc(db, `users/${currentUser.uid}/friends/${requesterId}`);
+            batch.set(myFriendRef, { status: 'friends', userData: requesterData, timestamp });
+
+            // For them (the requester): update their record to 'friends'
+            const requesterFriendRef = doc(db, `users/${requesterId}/friends/${currentUser.uid}`);
+            batch.set(requesterFriendRef, { status: 'friends', userData: currentUserData, timestamp });
+
+            // Delete the request from my list
+            const requestRef = doc(db, `users/${currentUser.uid}/friendRequests/${requesterId}`);
+            batch.delete(requestRef);
+            
+            await batch.commit();
         }
 
         // --- Chat Logic ---
