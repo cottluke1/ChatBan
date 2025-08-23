@@ -137,7 +137,6 @@
         const messageText = document.getElementById('message-text');
         const switchButton = document.getElementById('switch-button');
         const switcherPrompt = document.getElementById('switcher-prompt');
-
         const loginEmail = document.getElementById('login-email');
         const loginPassword = document.getElementById('login-password');
         const loginButton = document.getElementById('login-button');
@@ -147,8 +146,8 @@
 
         // --- Dynamic Button Logic ---
         const baseButtonClasses = "w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all";
-        const loginActiveClasses = "text-white bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:scale-105 transform";
-        const signupActiveClasses = "text-white bg-gradient-to-r from-teal-400 to-sky-500 hover:scale-105 transform";
+        const loginActiveClasses = "text-white bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:shadow-[0_0_15px_rgba(168,85,247,0.5)]";
+        const signupActiveClasses = "text-white bg-gradient-to-r from-teal-400 to-sky-500 hover:shadow-[0_0_15px_rgba(45,212,191,0.5)]";
 
         function validateEmail(email) {
             const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -178,7 +177,6 @@
         switchButton.addEventListener('click', () => {
             const isLoginView = !loginView.classList.contains('hidden');
             if (isLoginView) {
-                // Switch to Signup view
                 loginView.classList.add('hidden');
                 signupView.classList.remove('hidden');
                 switcherPrompt.textContent = "Already have an account?";
@@ -186,7 +184,6 @@
                 switchButton.classList.remove('text-teal-400');
                 switchButton.classList.add('text-purple-400');
             } else {
-                // Switch to Login view
                 loginView.classList.remove('hidden');
                 signupView.classList.add('hidden');
                 switcherPrompt.textContent = "Don't have an account?";
@@ -216,7 +213,7 @@
 
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    window.location.href = './onboarding.html';
+                    // Auth observer will handle redirect.
                 })
                 .catch((error) => {
                     showMessage(error.message);
@@ -231,7 +228,7 @@
 
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Auth observer will handle redirect
+                    // Auth observer will handle redirect.
                 })
                 .catch((error) => {
                     showMessage(error.message);
