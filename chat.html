@@ -48,8 +48,8 @@
                 <button id="add-friends-open-modal" class="p-2 rounded-full themed-hover">
                      <svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                 </button>
-                 <button id="notifications-btn" class="p-2 rounded-full themed-hover relative">
-                    <svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                 <button id="new-chat-btn" class="p-2 rounded-full themed-hover relative">
+                    <svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                     <div id="notification-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></div>
                 </button>
             </div>
@@ -90,7 +90,6 @@
     <!-- Modals -->
     <div id="modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden"></div>
     <div id="add-friends-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden"></div>
-    <div id="notifications-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden"></div>
     <div id="theme-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden"></div>
 
 
@@ -127,7 +126,7 @@
         const myPfpInitialSidebar = document.getElementById('my-pfp-initial-sidebar');
         const modalBackdrop = document.getElementById('modal-backdrop');
         const addFriendsModalBtn = document.getElementById('add-friends-open-modal');
-        const notificationsBtn = document.getElementById('notifications-btn');
+        const newChatBtn = document.getElementById('new-chat-btn');
         const notificationDot = document.getElementById('notification-dot');
         const mainChatArea = document.getElementById('main-chat-area');
         const profileDropdownBtn = document.getElementById('profile-dropdown-btn');
@@ -237,12 +236,30 @@
         // --- Add Friends Modal ---
         addFriendsModalBtn.addEventListener('click', async () => {
             const addFriendsModal = document.getElementById('add-friends-modal');
-            const allUsersRef = collection(db, 'users');
-            const q = query(allUsersRef, where('uid', '!=', currentUser.uid), orderBy('displayName'));
-            const snapshot = await getDocs(q);
+            const requestsRef = collection(db, `users/${currentUser.uid}/friendRequests`);
+            const requestsSnapshot = await getDocs(query(requestsRef, orderBy('timestamp', 'desc')));
+            
+            let requestsHtml = requestsSnapshot.docs.map(doc => {
+                 const req = doc.data();
+                 let pfpHtml = req.photoURL ? `<img src="${req.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${req.pfpColor}">${req.displayName.charAt(0).toUpperCase()}</div>`;
+                 return `<div class="p-2 flex items-center justify-between">
+                            <div class="flex items-center gap-3">${pfpHtml}<span>${req.displayName}</span></div>
+                            <div class="flex gap-2">
+                                <button class="accept-req-btn text-sm bg-green-600 text-white px-3 py-1 rounded-md" data-id="${req.uid}">Accept</button>
+                                <button class="decline-req-btn text-sm bg-red-600 text-white px-3 py-1 rounded-md" data-id="${req.uid}">Decline</button>
+                            </div>
+                         </div>`;
+            }).join('');
 
-            let usersHtml = snapshot.docs
-                .filter(doc => !friends.includes(doc.id))
+            const allUsersRef = collection(db, 'users');
+            const allUsersSnapshot = await getDocs(query(allUsersRef, where('uid', '!=', currentUser.uid), orderBy('displayName')));
+            const myRequestsSnapshot = await getDocs(collection(db, `users/${currentUser.uid}/friendRequests`));
+            const sentRequestsSnapshot = await getDocs(collection(db, `users/${currentUser.uid}/sentFriendRequests`));
+            const myRequestIds = myRequestsSnapshot.docs.map(d => d.id);
+            const sentRequestIds = sentRequestsSnapshot.docs.map(d => d.id);
+
+            let usersHtml = allUsersSnapshot.docs
+                .filter(doc => !friends.includes(doc.id) && !myRequestIds.includes(doc.id) && !sentRequestIds.includes(doc.id))
                 .map(doc => {
                     const user = doc.data();
                     let pfpHtml = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor}">${user.displayName.charAt(0).toUpperCase()}</div>`;
@@ -259,8 +276,13 @@
                 }).join('');
 
             addFriendsModal.innerHTML = `<div class="themed-bg-darker border-transparent shadow-2xl rounded-2xl p-6 max-w-sm w-full" style="background-color: #181818;">
-                <h3 class="text-xl font-bold mb-4">Find People</h3>
-                <div id="all-users-list" class="max-h-80 overflow-y-auto space-y-2">${usersHtml || '<p class="themed-text-secondary">No other users to add.</p>'}</div>
+                <h3 class="text-xl font-bold mb-4">Add Friends</h3>
+                <div id="all-users-list" class="max-h-80 overflow-y-auto space-y-2">
+                    <h4 class="font-bold text-sm text-gray-400 uppercase tracking-wider pb-2">Added Me</h4>
+                    ${requestsHtml || '<p class="themed-text-secondary text-sm">No new requests.</p>'}
+                    <h4 class="font-bold text-sm text-gray-400 uppercase tracking-wider pt-4 pb-2">Find People</h4>
+                    ${usersHtml || '<p class="themed-text-secondary text-sm">No other users to add.</p>'}
+                </div>
             </div>`;
             openModal(addFriendsModal);
             
@@ -274,51 +296,8 @@
                     e.target.classList.add('bg-gray-500');
                 });
             });
-        });
-        
-        // --- Friend Request Logic ---
-        async function sendFriendRequest(recipientId) {
-            const requestRef = doc(db, `users/${recipientId}/friendRequests/${currentUser.uid}`);
-            await setDoc(requestRef, {
-                uid: currentUser.uid,
-                displayName: currentUserData.displayName,
-                photoURL: currentUserData.photoURL || null,
-                pfpColor: currentUserData.pfpColor,
-                timestamp: serverTimestamp()
-            });
-        }
 
-        function listenForFriendRequests() {
-            const requestsRef = collection(db, `users/${currentUser.uid}/friendRequests`);
-            onSnapshot(requestsRef, (snapshot) => {
-                notificationDot.classList.toggle('hidden', snapshot.empty);
-            });
-        }
-        
-        notificationsBtn.addEventListener('click', async () => {
-            const notificationsModal = document.getElementById('notifications-modal');
-            const requestsRef = collection(db, `users/${currentUser.uid}/friendRequests`);
-            const snapshot = await getDocs(query(requestsRef, orderBy('timestamp', 'desc')));
-            
-            let requestsHtml = snapshot.docs.map(doc => {
-                 const req = doc.data();
-                 let pfpHtml = req.photoURL ? `<img src="${req.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${req.pfpColor}">${req.displayName.charAt(0).toUpperCase()}</div>`;
-                 return `<div class="p-2 flex items-center justify-between">
-                            <div class="flex items-center gap-3">${pfpHtml}<span>${req.displayName}</span></div>
-                            <div class="flex gap-2">
-                                <button class="accept-req-btn text-sm bg-green-600 text-white px-3 py-1 rounded-md" data-id="${req.uid}">Accept</button>
-                                <button class="decline-req-btn text-sm bg-red-600 text-white px-3 py-1 rounded-md" data-id="${req.uid}">Decline</button>
-                            </div>
-                         </div>`;
-            }).join('');
-
-            notificationsModal.innerHTML = `<div class="themed-bg-darker border-transparent shadow-2xl rounded-2xl p-6 max-w-sm w-full" style="background-color: #181818;">
-                <h3 class="text-xl font-bold mb-4">Friend Requests</h3>
-                <div class="max-h-80 overflow-y-auto space-y-2">${requestsHtml || '<p class="themed-text-secondary">No new requests.</p>'}</div>
-            </div>`;
-            openModal(notificationsModal);
-
-            notificationsModal.querySelectorAll('.accept-req-btn, .decline-req-btn').forEach(btn => btn.addEventListener('click', async (e) => {
+            addFriendsModal.querySelectorAll('.accept-req-btn, .decline-req-btn').forEach(btn => btn.addEventListener('click', async (e) => {
                 const friendId = e.target.dataset.id;
                 const isAccepting = e.target.classList.contains('accept-req-btn');
                 
@@ -334,9 +313,32 @@
                 } else {
                     await deleteDoc(doc(db, `users/${currentUser.uid}/friendRequests/${friendId}`));
                 }
-                closeModal(notificationsModal);
+                closeModal(addFriendsModal);
             }));
         });
+        
+        // --- Friend Request Logic ---
+        async function sendFriendRequest(recipientId) {
+            const batch = writeBatch(db);
+            const requestRef = doc(db, `users/${recipientId}/friendRequests/${currentUser.uid}`);
+            batch.set(requestRef, {
+                uid: currentUser.uid,
+                displayName: currentUserData.displayName,
+                photoURL: currentUserData.photoURL || null,
+                pfpColor: currentUserData.pfpColor,
+                timestamp: serverTimestamp()
+            });
+            const sentRequestRef = doc(db, `users/${currentUser.uid}/sentFriendRequests/${recipientId}`);
+            batch.set(sentRequestRef, { uid: recipientId });
+            await batch.commit();
+        }
+
+        function listenForFriendRequests() {
+            const requestsRef = collection(db, `users/${currentUser.uid}/friendRequests`);
+            onSnapshot(requestsRef, (snapshot) => {
+                notificationDot.classList.toggle('hidden', snapshot.empty);
+            });
+        }
         
         // --- Theme Modal ---
         themeModalBtn.addEventListener('click', () => {
