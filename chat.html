@@ -92,7 +92,7 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
 
-        // All DOM elements
+        // --- All DOM elements ---
         const userList = document.getElementById('user-list');
         const mainChatArea = document.getElementById('main-chat-area');
         const chatWithName = document.getElementById('chat-with-name');
@@ -123,7 +123,7 @@
         const replyPreviewText = document.getElementById('reply-preview-text');
         const cancelReplyBtn = document.getElementById('cancel-reply-btn');
 
-        // State variables
+        // --- State variables ---
         let currentUser = null;
         let currentUserData = null;
         let currentChatPartner = null;
@@ -170,19 +170,26 @@
         function listenForRelationships() {
             const relationshipsRef = collection(db, `users/${currentUser.uid}/relationships`);
             relationshipsUnsubscribe = onSnapshot(query(relationshipsRef, orderBy("timestamp", "desc")), async (snapshot) => {
-                if (snapshot.empty) { userList.innerHTML = `<div class="text-center p-4 text-gray-400">No friends yet. Add one!</div>`; notificationDot.classList.add('hidden'); return; }
+                if (snapshot.empty) {
+                    userList.innerHTML = `<div class="text-center p-4 text-gray-400">No friends yet. Add one!</div>`;
+                    notificationDot.classList.add('hidden');
+                    return;
+                }
+
                 const fetchPromises = snapshot.docs.map(async (d) => {
                     const rel = { id: d.id, ...d.data() };
-                    if (rel.userData) return rel; // Old format
-                    if (rel.uid) { // New format
+                    if (rel.userData) return rel; 
+                    if (rel.uid) {
                         const userDoc = await getDoc(doc(db, "users", rel.uid));
                         if (userDoc.exists()) return { ...rel, userData: userDoc.data() };
                     }
                     return null;
                 });
+
                 const populatedRelationships = (await Promise.all(fetchPromises)).filter(Boolean);
                 const friendRequests = populatedRelationships.filter(r => r.status !== 'friends');
                 const friends = populatedRelationships.filter(r => r.status === 'friends');
+                
                 updateUserListUI(friends, friendRequests);
                 notificationDot.classList.toggle('hidden', !friendRequests.some(r => r.status === 'received'));
             });
@@ -190,9 +197,19 @@
 
         function updateUserListUI(friends, requests) {
             userList.innerHTML = '';
-            if (friends.length === 0 && requests.length === 0) { userList.innerHTML = `<div class="text-center p-4 text-gray-400">No friends yet. Add one!</div>`; return; }
-            if (friends.length > 0) { friends.forEach(friend => renderUserInList(friend)); }
-            if (requests.length > 0) { if (friends.length > 0) { userList.innerHTML += `<div class="px-4 py-2 text-xs font-bold text-gray-400 uppercase">Requests</div>`; } requests.forEach(req => renderUserInList(req)); }
+            if (friends.length === 0 && requests.length === 0) {
+                userList.innerHTML = `<div class="text-center p-4 text-gray-400">No friends yet. Add one!</div>`;
+                return;
+            }
+            if (friends.length > 0) {
+                friends.forEach(friend => renderUserInList(friend));
+            }
+            if (requests.length > 0) {
+                if (friends.length > 0) {
+                    userList.innerHTML += `<div class="px-4 py-2 text-xs font-bold text-gray-400 uppercase">Requests</div>`;
+                }
+                requests.forEach(req => renderUserInList(req));
+            }
         }
 
         function renderUserInList(relationship) {
@@ -200,18 +217,42 @@
             const userElement = document.createElement('div');
             userElement.setAttribute('data-search-name', `${userData.displayName.toLowerCase()} ${userData.username.toLowerCase()}`);
             userElement.className = 'p-2 flex items-center justify-between cursor-pointer themed-hover rounded-lg transition';
+            
             let pfpHtml = userData.photoURL ? `<img src="${userData.photoURL}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white ${userData.pfpColor || 'bg-gray-700'}">${(userData.displayName || '?').charAt(0).toUpperCase()}</div>`;
+            
             let statusText = '', actionHtml = '';
             switch (status) {
-                case 'sent': statusText = `<p class="status-text text-sm text-gray-400">Request Sent</p>`; userElement.classList.replace('cursor-pointer', 'cursor-default'); break;
-                case 'received': statusText = `<p class="status-text text-sm text-blue-400">Friend Request</p>`; actionHtml = `<button class="accept-req-btn-sidebar text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md" data-uid="${userData.uid}">Accept</button>`; break;
-                case 'friends': statusText = `<p class="status-text text-sm text-gray-500">You are now friends!</p>`; break;
+                case 'sent':
+                    statusText = `<p class="status-text text-sm text-gray-400">Request Sent</p>`;
+                    userElement.classList.replace('cursor-pointer', 'cursor-default');
+                    break;
+                case 'received':
+                    statusText = `<p class="status-text text-sm text-blue-400">Friend Request</p>`;
+                    actionHtml = `<button class="accept-req-btn-sidebar text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md" data-uid="${userData.uid}">Accept</button>`;
+                    break;
+                case 'friends':
+                    statusText = `<p class="status-text text-sm text-gray-500">You are now friends!</p>`;
+                    break;
             }
-            userElement.innerHTML = `<div class="flex items-center gap-4 flex-grow">${pfpHtml}<div><p class="font-semibold text-white">${userData.displayName}</p>${statusText}</div></div><div class="action-container">${actionHtml}</div>`;
-            if (status === 'friends') { userElement.addEventListener('click', () => startChat(userData)); }
-            else if (status === 'received') {
+
+            userElement.innerHTML = `
+                <div class="flex items-center gap-4 flex-grow">
+                    ${pfpHtml}
+                    <div>
+                        <p class="font-semibold text-white">${userData.displayName}</p>
+                        ${statusText}
+                    </div>
+                </div>
+                <div class="action-container">${actionHtml}</div>`;
+
+            if (status === 'friends') {
+                userElement.addEventListener('click', () => startChat(userData));
+            } else if (status === 'received') {
                 const acceptBtn = userElement.querySelector('.accept-req-btn-sidebar');
-                acceptBtn.addEventListener('click', (e) => { e.stopPropagation(); acceptFriendRequest(userData.uid); });
+                acceptBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    acceptFriendRequest(userData.uid);
+                });
             }
             userList.appendChild(userElement);
         }
@@ -223,27 +264,34 @@
                 batch.update(doc(db, `users/${currentUser.uid}/relationships/${friendId}`), { status: 'friends', timestamp });
                 batch.update(doc(db, `users/${friendId}/relationships/${currentUser.uid}`), { status: 'friends', timestamp });
                 await batch.commit();
-            } catch (error) { console.error("Error accepting friend request:", error); }
+            } catch (error) {
+                console.error("Error accepting friend request:", error);
+            }
         }
 
         async function sendFriendRequest(recipientId) {
-             try {
+            try {
                 const batch = writeBatch(db);
                 const timestamp = serverTimestamp();
                 batch.set(doc(db, `users/${currentUser.uid}/relationships/${recipientId}`), { status: 'sent', uid: recipientId, timestamp });
                 batch.set(doc(db, `users/${recipientId}/relationships/${currentUser.uid}`), { status: 'received', uid: currentUser.uid, timestamp });
                 await batch.commit();
-            } catch (error) { console.error("Error sending friend request:", error); }
+            } catch (error) {
+                console.error("Error sending friend request:", error);
+            }
         }
         
         async function initializePopover() {
             const searchInput = document.getElementById('user-search-input');
             const popoverContent = document.getElementById('popover-content');
             const render = (html) => popoverContent.innerHTML = html;
+
             const requestsQuery = query(collection(db, `users/${currentUser.uid}/relationships`), where("status", "==", "received"));
             const requestSnapshot = await getDocs(requestsQuery);
-            if (requestSnapshot.empty) { render('<p class="text-gray-400 text-sm p-4">Search for users to add them.</p>'); }
-            else {
+
+            if (requestSnapshot.empty) {
+                render('<p class="text-gray-400 text-sm p-4">Search for users to add them.</p>');
+            } else {
                 const reqPromises = requestSnapshot.docs.map(d => getDoc(doc(db, "users", d.data().uid || d.id)));
                 const userDocs = await Promise.all(reqPromises);
                 let requestHtml = userDocs.map(userDoc => {
@@ -254,47 +302,67 @@
                 }).join('');
                 render(`<div class="p-2 text-left">${requestHtml}</div>`);
             }
+
             popoverContent.addEventListener('click', async (e) => {
                 const target = e.target.closest('button');
                 if (!target) return;
                 const recipientId = target.dataset.uid;
                 target.disabled = true;
-                if (target.matches('.add-friend-btn')) { target.textContent = 'Sent'; await sendFriendRequest(recipientId); }
-                else if (target.matches('.accept-req-btn')) { target.textContent = 'Accepted'; await acceptFriendRequest(recipientId); target.closest('[data-uid]').remove(); }
+                if (target.matches('.add-friend-btn')) {
+                    target.textContent = 'Sent';
+                    await sendFriendRequest(recipientId);
+                } else if (target.matches('.accept-req-btn')) {
+                    target.textContent = 'Accepted';
+                    await acceptFriendRequest(recipientId);
+                    target.closest('[data-uid]').remove();
+                }
             });
+
             searchInput.addEventListener('input', async () => {
                 const searchTerm = searchInput.value.trim().toLowerCase();
                 if (searchTerm.length < 2) { initializePopover(); return; }
                 try {
-                    if (!allUsersCache) { const usersSnapshot = await getDocs(collection(db, 'users')); allUsersCache = usersSnapshot.docs.map(doc => doc.data()); }
+                    if (!allUsersCache) {
+                        const usersSnapshot = await getDocs(collection(db, 'users'));
+                        allUsersCache = usersSnapshot.docs.map(doc => doc.data());
+                    }
                     const myRelationshipsSnap = await getDocs(collection(db, `users/${currentUser.uid}/relationships`));
                     const excludedIds = new Set([currentUser.uid, ...myRelationshipsSnap.docs.map(d => d.id)]);
                     const results = allUsersCache.filter(user => !excludedIds.has(user.uid) && (user.username.toLowerCase().includes(searchTerm) || user.displayName.toLowerCase().includes(searchTerm)));
-                    if (results.length === 0) { render('<p class="text-gray-400 text-sm p-4">No users found.</p>'); }
-                    else {
+
+                    if (results.length === 0) {
+                        render('<p class="text-gray-400 text-sm p-4">No users found.</p>');
+                    } else {
                         let userItems = results.map(user => {
                             let pfp = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor || 'bg-gray-700'}">${user.displayName.charAt(0).toUpperCase()}</div>`;
                             return `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg"><div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${user.displayName}</p><p class="text-xs text-gray-400">@${user.username}</p></div></div><button class="add-friend-btn text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-md" data-uid="${user.uid}">Add</button></div>`;
                         }).join('');
                         render(`<div class="p-2 text-left">${userItems}</div>`);
                     }
-                } catch (error) { console.error("Search Error: ", error); render('<p class="text-red-400 text-sm p-4">Could not perform search.</p>'); }
+                } catch (error) {
+                    console.error("Search Error: ", error);
+                    render('<p class="text-red-400 text-sm p-4">Could not perform search.</p>');
+                }
             });
         }
         
         // --- Chat Logic ---
         async function startChat(partnerData) {
             currentChatPartner = partnerData;
-            mainChatArea.classList.remove('hidden'); mainChatArea.classList.add('flex');
+            mainChatArea.classList.remove('hidden');
+            mainChatArea.classList.add('flex');
             chatWithName.textContent = partnerData.displayName;
             editThemeBtn.classList.remove('hidden');
             chatMessages.innerHTML = '';
+
             let pfpHtml = partnerData.photoURL ? `<img src="${partnerData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${partnerData.pfpColor || 'bg-gray-700'}">${(partnerData.displayName || '?').charAt(0).toUpperCase()}</div>`;
             chatHeaderPfp.innerHTML = pfpHtml;
             if (window.innerWidth < 1024) { sidebar.classList.add('-translate-x-full'); }
+
             const relationshipRef = doc(db, `users/${currentUser.uid}/relationships/${partnerData.uid}`);
             const relationshipSnap = await getDoc(relationshipRef);
             applyTheme(relationshipSnap.exists() && relationshipSnap.data().theme ? relationshipSnap.data().theme : { myBubbleColor: '#7c3aed', friendBubbleColor: '#374151', backgroundImage: 'none' });
+            
             const channelId = [currentUser.uid, partnerData.uid].sort().join('_');
             const messagesRef = collection(db, "chats", channelId, "messages");
             if (messagesUnsubscribe) messagesUnsubscribe();
@@ -305,33 +373,44 @@
                     if (change.type === "modified") updateMessage(messageData);
                     if (change.type === "removed") document.getElementById(change.doc.id)?.remove();
                 });
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                if (chatMessages.scrollHeight > chatMessages.clientHeight) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
             });
         }
+
         function displayMessage(message) {
             const isSentByMe = message.from === currentUser.uid;
             const messageElement = document.createElement('div');
             messageElement.id = message.id;
-            messageElement.className = `flex items-end gap-2 group ${isSentByMe ? 'justify-end' : 'justify-start'}`;
+            messageElement.className = `w-full flex items-end gap-2 group relative ${isSentByMe ? 'justify-end' : 'justify-start'}`;
+            
             const bubble = document.createElement('div');
             bubble.style.backgroundColor = isSentByMe ? currentTheme.myBubbleColor : currentTheme.friendBubbleColor;
             bubble.className = `max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByMe ? 'rounded-br-lg' : 'rounded-bl-lg'} shadow-md text-white`;
+            
             let replyHtml = message.replyToText ? `<div class="mb-2 p-2 border-l-2 border-white/30 bg-white/10 rounded-md"><p class="text-xs text-gray-200 break-words">${message.replyToText}</p></div>` : '';
             bubble.innerHTML = `${replyHtml}<p class="text-sm break-words">${message.text}</p>`;
+            
             const reactionsContainer = document.createElement('div');
             reactionsContainer.className = 'reactions-container absolute -bottom-4 flex gap-1';
+            
             messageElement.appendChild(bubble);
             bubble.insertAdjacentElement('afterend', reactionsContainer);
             messageElement.addEventListener('dblclick', (e) => showActionsPopover(e, message));
+            
             chatMessages.appendChild(messageElement);
             updateMessage(message);
         }
+
         function updateMessage(message) {
             const messageElement = document.getElementById(message.id);
             if (!messageElement) return;
+
             const reactionsContainer = messageElement.querySelector('.reactions-container');
             if (!reactionsContainer) return;
             reactionsContainer.innerHTML = '';
+            
             if (message.reactions) {
                 const reactionCounts = Object.values(message.reactions).reduce((acc, emoji) => ({...acc, [emoji]:(acc[emoji]||0)+1}), {});
                 for (const [emoji, count] of Object.entries(reactionCounts)) {
@@ -342,6 +421,7 @@
                 }
             }
         }
+
         messageForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const text = messageInput.value.trim();
@@ -359,14 +439,14 @@
         function showActionsPopover(event, message) {
             event.stopPropagation();
             popover.classList.remove('hidden');
-            document.getElementById('react-palette').classList.add('hidden');
+            document.getElementById('react-palette').style.display = 'none';
             document.getElementById('main-actions').style.display = 'flex';
             popover.dataset.messageId = message.id;
             popover.dataset.messageText = message.text;
             document.getElementById('action-delete').style.display = message.from === currentUser.uid ? 'block' : 'none';
             const rect = event.currentTarget.getBoundingClientRect();
             const popoverHeight = popover.offsetHeight;
-            popover.style.top = `${rect.top - popoverHeight - 10 + chatMessages.scrollTop}px`;
+            popover.style.top = `${rect.top - popoverHeight - 10}px`;
             popover.style.left = `${rect.left + rect.width / 2 - popover.offsetWidth / 2}px`;
             setTimeout(() => document.addEventListener('click', hidePopover, { once: true }), 0);
         }
@@ -417,11 +497,29 @@
         function applyTheme(theme) { currentTheme = theme; chatMessages.style.backgroundImage = theme.backgroundImage === 'none' ? 'none' : `url(${theme.backgroundImage})`; }
         
         // --- Utility Listeners ---
+        addFriendsPopoverBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            addFriendsPopover.classList.toggle('hidden');
+            if (!addFriendsPopover.classList.contains('hidden')) {
+                initializePopover();
+            }
+        });
         toggleSidebar.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
         logoutDropdownBtn.addEventListener('click', () => signOut(auth));
-        document.addEventListener('click', (e) => { if (!addFriendsPopover.classList.contains('hidden') && !addFriendsPopoverBtn.contains(e.target) && !addFriendsPopover.contains(e.target)) { addFriendsPopover.classList.add('hidden'); } if (!profileDropdown.classList.contains('hidden') && !profileDropdownBtn.contains(e.target)) { profileDropdown.classList.add('hidden'); } });
-        friendFilterInput.addEventListener('input', (e) => { const searchTerm = e.target.value.toLowerCase(); userList.querySelectorAll('[data-search-name]').forEach(userElement => { userElement.style.display = userElement.getAttribute('data-search-name').includes(searchTerm) ? 'flex' : 'none'; }); });
-
+        profileDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => { 
+            if (!addFriendsPopover.classList.contains('hidden') && !addFriendsPopoverBtn.contains(e.target) && !addFriendsPopover.contains(e.target)) { addFriendsPopover.classList.add('hidden'); } 
+            if (!profileDropdown.classList.contains('hidden') && !profileDropdownBtn.contains(e.target)) { profileDropdown.classList.add('hidden'); } 
+        });
+        friendFilterInput.addEventListener('input', (e) => { 
+            const searchTerm = e.target.value.toLowerCase(); 
+            userList.querySelectorAll('[data-search-name]').forEach(userElement => { 
+                userElement.style.display = userElement.getAttribute('data-search-name').includes(searchTerm) ? 'flex' : 'none'; 
+            }); 
+        });
     </script>
 </body>
 </html>
