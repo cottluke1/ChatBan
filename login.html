@@ -155,6 +155,7 @@
         }
 
         function checkFormValidity(emailInput, passwordInput, button, activeClasses) {
+            if (button.disabled && button.textContent.includes('...')) return; // Don't re-enable while processing
             const isEmailValid = validateEmail(emailInput.value);
             const isPasswordValid = passwordInput.value.length >= 6;
 
@@ -217,6 +218,7 @@
                 case "auth/weak-password":
                     return "Password should be at least 6 characters.";
                 default:
+                    console.error(error); // Log unexpected errors
                     return "An unexpected error occurred. Please try again.";
             }
         }
@@ -235,9 +237,8 @@
 
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Success! Change button text to give feedback.
-                    // The onAuthStateChanged observer will handle the redirect.
                     signupButton.textContent = "Success! Redirecting...";
+                    // onAuthStateChanged will handle the redirect
                 })
                 .catch((error) => {
                     showMessage(handleAuthError(error));
@@ -259,8 +260,8 @@
 
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Success! The onAuthStateChanged observer will handle the redirect.
                     loginButton.textContent = "Success! Redirecting...";
+                    // onAuthStateChanged will handle the redirect
                 })
                 .catch((error) => {
                     showMessage(handleAuthError(error));
@@ -272,11 +273,14 @@
         // --- Auth State Observer ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                // A user is logged in. Check if they have a profile.
                 const userDocRef = doc(db, "users", user.uid);
                 getDoc(userDocRef).then(docSnap => {
                     if (docSnap.exists()) {
+                        // Profile exists, go to chat.
                         window.location.href = './chat.html';
                     } else {
+                        // New user, go to onboarding.
                         window.location.href = './onboarding.html';
                     }
                 }).catch(error => {
