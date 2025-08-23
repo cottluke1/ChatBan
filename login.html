@@ -193,29 +193,32 @@
             }
         });
 
-        // --- Functions ---
-        function showMessage(error) {
-            let message = "An unexpected error occurred. Please try again.";
-            switch (error.code) {
-                case "auth/email-already-in-use":
-                    message = "An account already exists with this email address.";
-                    break;
-                case "auth/wrong-password":
-                    message = "Incorrect password. Please try again.";
-                    break;
-                case "auth/user-not-found":
-                    message = "No account found with this email address.";
-                    break;
-                case "auth/invalid-email":
-                    message = "Please enter a valid email address.";
-                    break;
-                case "auth/weak-password":
-                    message = "Password should be at least 6 characters.";
-                    break;
-            }
-            messageText.textContent = message;
+        // --- UI Feedback Functions ---
+        function showMessage(text) {
+            messageText.textContent = text;
             messageBox.classList.remove('hidden');
             messageBox.className = 'p-4 text-sm text-center rounded-lg bg-red-900/50 text-red-300 border border-red-500/50';
+        }
+
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        function handleAuthError(error) {
+            switch (error.code) {
+                case "auth/email-already-in-use":
+                    return "An account already exists with this email address.";
+                case "auth/wrong-password":
+                    return "Incorrect password. Please try again.";
+                case "auth/user-not-found":
+                    return "No account found with this email address.";
+                case "auth/invalid-email":
+                    return "Please enter a valid email address.";
+                case "auth/weak-password":
+                    return "Password should be at least 6 characters.";
+                default:
+                    return "An unexpected error occurred. Please try again.";
+            }
         }
 
         // --- Event Listeners for Forms ---
@@ -223,6 +226,7 @@
             e.preventDefault();
             if (signupButton.disabled) return;
             
+            hideMessage();
             signupButton.disabled = true;
             signupButton.textContent = "Creating...";
 
@@ -231,10 +235,12 @@
 
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Success. The onAuthStateChanged observer will handle the redirect.
+                    // Success! Change button text to give feedback.
+                    // The onAuthStateChanged observer will handle the redirect.
+                    signupButton.textContent = "Success! Redirecting...";
                 })
                 .catch((error) => {
-                    showMessage(error);
+                    showMessage(handleAuthError(error));
                     signupButton.disabled = false;
                     signupButton.textContent = "Create Account";
                 });
@@ -244,6 +250,7 @@
             e.preventDefault();
             if (loginButton.disabled) return;
 
+            hideMessage();
             loginButton.disabled = true;
             loginButton.textContent = "Signing In...";
 
@@ -252,10 +259,11 @@
 
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Success. The onAuthStateChanged observer will handle the redirect.
+                    // Success! The onAuthStateChanged observer will handle the redirect.
+                    loginButton.textContent = "Success! Redirecting...";
                 })
                 .catch((error) => {
-                    showMessage(error);
+                    showMessage(handleAuthError(error));
                     loginButton.disabled = false;
                     loginButton.textContent = "Sign In";
                 });
@@ -273,7 +281,7 @@
                     }
                 }).catch(error => {
                     console.error("Error checking user profile:", error);
-                    showMessage({ code: 'custom', message: "Could not verify your profile. Please try again."});
+                    showMessage("Could not verify your profile. Please try again.");
                 });
             }
         });
