@@ -31,55 +31,107 @@
             cursor: not-allowed;
             opacity: 0.6;
         }
+        select {
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="gray" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5em;
+            padding-right: 2.5rem;
+        }
+        .step { display: none; }
+        .step.active { display: block; }
     </style>
 </head>
 <body class="background-wrapper flex items-center justify-center h-screen text-gray-200">
     <div class="glow-effect"></div>
 
-    <div class="w-full max-w-md p-8 space-y-6 bg-black/60 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl z-10">
-        <div class="text-center">
-            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">
-                Set Up Your Profile
-            </h1>
-            <p class="mt-2 text-sm text-gray-400">Just a few more details to get started.</p>
+    <div class="w-full max-w-md p-8 bg-black/60 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl z-10">
+
+        <!-- Step 1: Username & Display Name -->
+        <div id="step-1" class="step active">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">Choose Your Names</h1>
+                <p class="mt-2 text-sm text-gray-400">Your username is unique. Your display name is what others will see.</p>
+            </div>
+            <div class="space-y-6 pt-6">
+                <div>
+                    <label for="username" class="text-sm font-medium text-gray-400">Username</label>
+                    <input id="username" type="text" required class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    <p id="username-status" class="text-xs mt-1 h-4"></p>
+                </div>
+                <div>
+                    <label for="displayName" class="text-sm font-medium text-gray-400">Display Name</label>
+                    <input id="displayName" type="text" required class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+                <button id="continue-1" disabled class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all btn-disabled">Continue</button>
+            </div>
         </div>
 
-        <form id="onboarding-form" class="space-y-6 pt-6">
-            <div>
-                <label for="name" class="text-sm font-medium text-gray-400">Full Name</label>
-                <input id="name" name="name" type="text" required
-                    class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition">
+        <!-- Step 2: School & Grad Year -->
+        <div id="step-2" class="step">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">School Information</h1>
+                <p class="mt-2 text-sm text-gray-400">This helps you connect with classmates.</p>
             </div>
-            <div>
-                <label for="school" class="text-sm font-medium text-gray-400">School Name</label>
-                <input id="school" name="school" type="text" required
-                    class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition">
+            <div class="space-y-6 pt-6">
+                <div>
+                    <label for="school" class="text-sm font-medium text-gray-400">School Name</label>
+                    <input id="school" type="text" required class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+                <div>
+                    <label for="gradYear" class="text-sm font-medium text-gray-400">Graduation Year</label>
+                    <select id="gradYear" required class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option value="" disabled selected>Select Year</option>
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <button id="back-2" class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg bg-gray-700 hover:bg-gray-600 transition-all">Back</button>
+                    <button id="continue-2" disabled class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all btn-disabled">Continue</button>
+                </div>
             </div>
-            <div>
-                <label for="gradYear" class="text-sm font-medium text-gray-400">Graduation Year</label>
-                <input id="gradYear" name="gradYear" type="number" min="2020" max="2035" required
-                    class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition">
+        </div>
+
+        <!-- Step 3: Confirmation -->
+        <div id="step-3" class="step">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">Looks good?</h1>
+                <p class="mt-2 text-sm text-gray-400">Confirm your details below.</p>
             </div>
-            <div>
-                <button id="complete-profile-button" type="submit" disabled
-                    class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all btn-disabled">
-                    Complete Profile
-                </button>
+            <div class="space-y-4 pt-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-20 h-20 bg-gradient-to-br from-fuchsia-600 to-purple-600 rounded-full flex-shrink-0"></div>
+                    <div class="w-full space-y-2">
+                        <div class="flex justify-between items-center">
+                            <p><strong class="text-gray-400">Username:</strong> <span id="confirm-username"></span></p>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p><strong class="text-gray-400">Display Name:</strong> <span id="confirm-displayName"></span></p>
+                            <button data-field="displayName" class="edit-btn p-1 text-gray-500 hover:text-white"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg></button>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p><strong class="text-gray-400">School:</strong> <span id="confirm-school"></span></p>
+                             <button data-field="school" class="edit-btn p-1 text-gray-500 hover:text-white"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg></button>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p><strong class="text-gray-400">Grad Year:</strong> <span id="confirm-gradYear"></span></p>
+                             <button data-field="gradYear" class="edit-btn p-1 text-gray-500 hover:text-white"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button id="back-3" class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg bg-gray-700 hover:bg-gray-600 transition-all">Back</button>
+                    <button id="continue-3" class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all text-white bg-gradient-to-r from-teal-400 to-sky-500">Finish</button>
+                </div>
             </div>
-        </form>
-        
-        <!-- Message Box -->
-        <div id="message-box" class="hidden p-4 text-sm text-center rounded-lg" role="alert">
-            <span class="font-medium" id="message-text"></span>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAFA-KDIFkqGmQ2fp9mz0tpwDOzcp_D93A",
             authDomain: "phonechatban.firebaseapp.com",
@@ -90,91 +142,173 @@
             measurementId: "G-DVPM4KQ70Y"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // DOM Elements
-        const onboardingForm = document.getElementById('onboarding-form');
-        const messageBox = document.getElementById('message-box');
-        const messageText = document.getElementById('message-text');
-        const nameInput = document.getElementById('name');
-        const schoolInput = document.getElementById('school');
-        const gradYearInput = document.getElementById('gradYear');
-        const completeProfileButton = document.getElementById('complete-profile-button');
+        // --- State Management ---
         let currentUser = null;
+        let onboardingData = {};
+        let isUsernameAvailable = false;
+        let usernameCheckTimeout;
 
-        // --- Dynamic Button Logic ---
+        // --- DOM Elements ---
+        const steps = document.querySelectorAll('.step');
+        const usernameInput = document.getElementById('username');
+        const usernameStatus = document.getElementById('username-status');
+        const displayNameInput = document.getElementById('displayName');
+        const schoolInput = document.getElementById('school');
+        const gradYearSelect = document.getElementById('gradYear');
+        const continue1Btn = document.getElementById('continue-1');
+        const continue2Btn = document.getElementById('continue-2');
+        const continue3Btn = document.getElementById('continue-3');
+        const back2Btn = document.getElementById('back-2');
+        const back3Btn = document.getElementById('back-3');
+
+        // --- Navigation ---
+        function goToStep(stepNumber) {
+            steps.forEach(step => step.classList.remove('active'));
+            document.getElementById(`step-${stepNumber}`).classList.add('active');
+        }
+
+        continue1Btn.addEventListener('click', () => {
+            onboardingData.username = usernameInput.value.toLowerCase();
+            onboardingData.displayName = displayNameInput.value;
+            goToStep(2);
+        });
+        back2Btn.addEventListener('click', () => goToStep(1));
+        continue2Btn.addEventListener('click', () => {
+            onboardingData.schoolName = schoolInput.value;
+            onboardingData.graduationYear = gradYearSelect.value;
+            populateConfirmation();
+            goToStep(3);
+        });
+        back3Btn.addEventListener('click', () => goToStep(2));
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const field = e.currentTarget.dataset.field;
+                if (field === 'displayName') goToStep(1);
+                else goToStep(2);
+            });
+        });
+
+        // --- Populate Confirmation ---
+        function populateConfirmation() {
+            document.getElementById('confirm-username').textContent = onboardingData.username;
+            document.getElementById('confirm-displayName').textContent = onboardingData.displayName;
+            document.getElementById('confirm-school').textContent = onboardingData.schoolName;
+            document.getElementById('confirm-gradYear').textContent = onboardingData.graduationYear;
+        }
+
+        // --- Populate Grad Year ---
+        for (let year = 2026; year <= 2038; year++) {
+            gradYearSelect.appendChild(new Option(year, year));
+        }
+
+        // --- Validation & Button Logic ---
+        const btnActiveClasses = "text-white bg-gradient-to-r from-teal-400 to-sky-500";
         const baseButtonClasses = "w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all";
-        const activeClasses = "text-white bg-gradient-to-r from-teal-400 to-sky-500 hover:scale-105 transform";
 
-        function checkFormValidity() {
-            const isNameValid = nameInput.value.trim() !== '';
-            const isSchoolValid = schoolInput.value.trim() !== '';
-            const isGradYearValid = gradYearInput.value.length === 4;
+        async function checkUsername() {
+            const username = usernameInput.value.toLowerCase().trim();
+            if (username.length < 3 || !/^[a-z0-9_.]+$/.test(username)) {
+                usernameStatus.textContent = '3+ characters, letters, numbers, _, .';
+                usernameStatus.className = 'text-xs mt-1 h-4 text-yellow-500';
+                isUsernameAvailable = false;
+                validateStep1();
+                return;
+            }
+            usernameStatus.textContent = 'Checking...';
+            usernameStatus.className = 'text-xs mt-1 h-4 text-gray-500';
+            
+            const docRef = doc(db, "usernames", username);
+            const docSnap = await getDoc(docRef);
 
-            if (isNameValid && isSchoolValid && isGradYearValid) {
-                completeProfileButton.disabled = false;
-                completeProfileButton.className = `${baseButtonClasses} ${activeClasses}`;
+            if (docSnap.exists()) {
+                usernameStatus.textContent = 'Username is taken.';
+                usernameStatus.className = 'text-xs mt-1 h-4 text-red-500';
+                isUsernameAvailable = false;
             } else {
-                completeProfileButton.disabled = true;
-                completeProfileButton.className = `${baseButtonClasses} btn-disabled`;
+                usernameStatus.textContent = 'Username is available!';
+                usernameStatus.className = 'text-xs mt-1 h-4 text-green-500';
+                isUsernameAvailable = true;
+            }
+            validateStep1();
+        }
+
+        function validateStep1() {
+            const isDisplayNameValid = displayNameInput.value.trim().length > 0;
+            if (isUsernameAvailable && isDisplayNameValid) {
+                continue1Btn.disabled = false;
+                continue1Btn.className = `${baseButtonClasses} ${btnActiveClasses}`;
+            } else {
+                continue1Btn.disabled = true;
+                continue1Btn.className = `${baseButtonClasses} btn-disabled`;
             }
         }
 
-        nameInput.addEventListener('input', checkFormValidity);
-        schoolInput.addEventListener('input', checkFormValidity);
-        gradYearInput.addEventListener('input', checkFormValidity);
-
-        function showMessage(message) {
-            messageText.textContent = message;
-            messageBox.classList.remove('hidden');
-            messageBox.className = 'p-4 text-sm text-center rounded-lg bg-red-900/50 text-red-300 border border-red-500/50';
+        function validateStep2() {
+            const isSchoolValid = schoolInput.value.trim() !== '';
+            const isGradYearValid = gradYearSelect.value !== '';
+            if (isSchoolValid && isGradYearValid) {
+                continue2Btn.disabled = false;
+                continue2Btn.className = `${baseButtonClasses} ${btnActiveClasses}`;
+            } else {
+                continue2Btn.disabled = true;
+                continue2Btn.className = `${baseButtonClasses} btn-disabled`;
+            }
         }
 
-        // Listen for auth state changes to ensure we have a user
+        usernameInput.addEventListener('input', () => {
+            clearTimeout(usernameCheckTimeout);
+            usernameCheckTimeout = setTimeout(checkUsername, 500); // Debounce
+        });
+        displayNameInput.addEventListener('input', validateStep1);
+        schoolInput.addEventListener('input', validateStep2);
+        gradYearSelect.addEventListener('change', validateStep2);
+
+        // --- Auth & Final Submission ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
             } else {
-                // If no user is logged in, they shouldn't be here. Redirect to login.
                 window.location.href = './login.html';
             }
         });
 
-        onboardingForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (completeProfileButton.disabled) return;
-            if (!currentUser) {
-                showMessage("You are not logged in. Please return to the login page.");
-                return;
-            }
+        continue3Btn.addEventListener('click', async () => {
+            if (!currentUser) return alert("Error: Not logged in.");
+            
+            try {
+                const batch = writeBatch(db);
+                
+                // 1. Set the user document
+                const userDocRef = doc(db, "users", currentUser.uid);
+                batch.set(userDocRef, {
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    username: onboardingData.username,
+                    displayName: onboardingData.displayName,
+                    schoolName: onboardingData.schoolName,
+                    graduationYear: onboardingData.graduationYear,
+                    createdAt: new Date()
+                });
 
-            const name = nameInput.value;
-            const school = schoolInput.value;
-            const gradYear = gradYearInput.value;
+                // 2. Set the username document to enforce uniqueness
+                const usernameDocRef = doc(db, "usernames", onboardingData.username);
+                batch.set(usernameDocRef, { uid: currentUser.uid });
 
-            // Create a document in the 'users' collection with the user's UID as the document ID
-            const userDocRef = doc(db, "users", currentUser.uid);
-
-            setDoc(userDocRef, {
-                uid: currentUser.uid,
-                email: currentUser.email,
-                displayName: name,
-                schoolName: school,
-                graduationYear: gradYear,
-                createdAt: new Date() // Good practice to store when the profile was made
-            })
-            .then(() => {
-                // Profile created successfully, now redirect to the main chat app
+                // Commit the batch
+                await batch.commit();
+                
                 window.location.href = './chat.html';
-            })
-            .catch((error) => {
-                console.error("Error writing document: ", error);
-                showMessage("Error saving your profile. Please try again.");
-            });
+
+            } catch (error) {
+                console.error("Error saving profile: ", error);
+                alert("Could not save profile. The username might have been taken. Please go back and try another.");
+            }
         });
+
     </script>
 </body>
 </html>
