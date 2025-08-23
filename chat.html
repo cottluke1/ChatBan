@@ -148,7 +148,7 @@
         
         function loadMyProfile(userData) { /* ...unchanged... */ if (userData.photoURL) { myPfpSidebar.src = userData.photoURL; myPfpSidebar.classList.remove('hidden'); myPfpInitialSidebar.classList.add('hidden'); } else { myPfpInitialSidebar.textContent = (userData.displayName || '?').charAt(0).toUpperCase(); myPfpInitialSidebar.className = `w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${userData.pfpColor}`; myPfpSidebar.classList.add('hidden'); myPfpInitialSidebar.classList.remove('hidden'); } }
 
-        // --- NEW DATA LOGIC ---
+        // --- FIX: This function now handles both old and new data structures ---
         function listenForRelationships() {
             const relationshipsRef = collection(db, `users/${currentUser.uid}/relationships`);
             relationshipsUnsubscribe = onSnapshot(query(relationshipsRef, orderBy("timestamp", "desc")), async (snapshot) => {
@@ -159,22 +159,35 @@
                     return;
                 }
 
-                // Step 1: Get the basic relationship data (UID and status)
-                const relationships = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const relationshipsToFetch = [];
+                let populatedRelationships = [];
 
-                // Step 2: Create a list of promises to fetch the full user profile for each relationship
-                const userPromises = relationships.map(rel => getDoc(doc(db, "users", rel.uid)));
-                const userDocs = await Promise.all(userPromises);
+                // Step 1: Separate relationships that need fetching from those that don't
+                snapshot.docs.forEach(doc => {
+                    const rel = { id: doc.id, ...doc.data() };
+                    if (rel.userData) { // Old format, data is already here
+                        populatedRelationships.push(rel);
+                    } else if (rel.uid) { // New format, need to fetch user data
+                        relationshipsToFetch.push(rel);
+                    }
+                });
 
-                // Step 3: Combine the relationship data with the fetched user data
-                const populatedRelationships = relationships.map((rel, index) => {
-                    return {
-                        ...rel, // Contains status, timestamp, uid
-                        userData: userDocs[index].data() // Contains displayName, photoURL, etc.
-                    };
-                }).filter(rel => rel.userData); // Filter out any relationships where the user doc might be missing
+                // Step 2: Fetch user data for the new format relationships
+                if (relationshipsToFetch.length > 0) {
+                    const userPromises = relationshipsToFetch.map(rel => getDoc(doc(db, "users", rel.uid)));
+                    const userDocs = await Promise.all(userPromises);
 
-                // Step 4: Separate into friends and requests, then render the UI
+                    const fetchedData = relationshipsToFetch.map((rel, index) => ({
+                        ...rel,
+                        userData: userDocs[index].data()
+                    })).filter(r => r.userData); // Ensure user data exists
+
+                    populatedRelationships = [...populatedRelationships, ...fetchedData];
+                }
+                
+                // Step 3: Sort and render the fully populated list
+                populatedRelationships.sort((a, b) => b.timestamp - a.timestamp);
+                
                 const friendRequests = populatedRelationships.filter(r => r.status !== 'friends');
                 const friends = populatedRelationships.filter(r => r.status === 'friends');
                 
@@ -187,17 +200,21 @@
 
         function renderUserInList(relationship) { /* ...unchanged... */ const { userData, status } = relationship; const userElement = document.createElement('div'); userElement.setAttribute('data-search-name', `${userData.displayName.toLowerCase()} ${userData.username.toLowerCase()}`); userElement.className = 'p-2 flex items-center justify-between cursor-pointer themed-hover rounded-lg transition'; let pfpHtml = userData.photoURL ? `<img src="${userData.photoURL}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white ${userData.pfpColor}">${(userData.displayName || '?').charAt(0).toUpperCase()}</div>`; let statusText = ''; let actionHtml = ''; switch (status) { case 'sent': statusText = `<p class="status-text text-sm text-gray-400">Request Sent</p>`; userElement.classList.replace('cursor-pointer', 'cursor-default'); break; case 'received': statusText = `<p class="status-text text-sm text-blue-400">Friend Request</p>`; actionHtml = `<button class="accept-req-btn-sidebar text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md" data-uid="${userData.uid}">Accept</button>`; break; case 'friends': statusText = `<p class="status-text text-sm text-gray-500">Start chatting</p>`; break; } userElement.innerHTML = `<div class="flex items-center gap-4 flex-grow">${pfpHtml}<div><p class="font-semibold text-white">${userData.displayName}</p>${statusText}</div></div><div class="action-container">${actionHtml}</div>`; if (status === 'friends') { userElement.addEventListener('click', () => startChat(userData)); } else if (status === 'received') { const acceptBtn = userElement.querySelector('.accept-req-btn-sidebar'); const actionContainer = userElement.querySelector('.action-container'); const statusTextElement = userElement.querySelector('.status-text'); acceptBtn.addEventListener('click', async (e) => { e.stopPropagation(); actionContainer.innerHTML = ''; statusTextElement.textContent = 'You are now friends!'; statusTextElement.className = 'status-text text-sm text-green-400'; userElement.classList.replace('cursor-pointer', 'cursor-default'); await acceptFriendRequest(userData.uid); }); } userList.appendChild(userElement); }
 
-        // --- NEW DATA LOGIC ---
+        // --- FIX: This function now consistently writes the new, UID-only format ---
         async function sendFriendRequest(recipientId) {
             try {
+                // Ensure we have the latest data for the current user
+                if (!currentUserData) {
+                    const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+                    if (userDoc.exists()) currentUserData = userDoc.data();
+                }
+
                 const batch = writeBatch(db);
                 const timestamp = serverTimestamp();
                 
-                // My relationship doc (sender) - now only stores UID
                 const senderRef = doc(db, `users/${currentUser.uid}/relationships/${recipientId}`);
                 batch.set(senderRef, { status: 'sent', uid: recipientId, timestamp });
                 
-                // Their relationship doc (recipient) - now only stores UID
                 const recipientRef = doc(db, `users/${recipientId}/relationships/${currentUser.uid}`);
                 batch.set(recipientRef, { status: 'received', uid: currentUser.uid, timestamp });
 
@@ -207,7 +224,6 @@
             }
         }
         
-        // --- This function remains the same, it just updates status ---
         async function acceptFriendRequest(friendId) { /* ...unchanged... */ try { const batch = writeBatch(db); const timestamp = serverTimestamp(); const myRef = doc(db, `users/${currentUser.uid}/relationships/${friendId}`); batch.update(myRef, { status: 'friends', timestamp }); const friendRef = doc(db, `users/${friendId}/relationships/${currentUser.uid}`); batch.update(friendRef, { status: 'friends', timestamp }); await batch.commit(); } catch (error) { console.error("Error accepting friend request:", error); } }
 
         // Other functions (initializePopover, startChat, etc.) remain unchanged...
