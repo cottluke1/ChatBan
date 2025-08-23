@@ -83,7 +83,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, doc, getDoc, updateDoc, writeBatch, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, doc, getDoc, updateDoc, writeBatch, getDocs, deleteDoc, limit, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
         const firebaseConfig = { apiKey: "AIzaSyAFA-KDIFkqGmQ2fp9mz0tpwDOzcp_D93A", authDomain: "phonechatban.firebaseapp.com", projectId: "phonechatban", storageBucket: "phonechatban.firebasestorage.app", messagingSenderId: "987815128530", appId: "1:987815128530:web:4a938c18fd910b8d7bac0b", measurementId: "G-DVPM4KQ70Y" };
@@ -178,10 +178,24 @@
 
                 const fetchPromises = snapshot.docs.map(async (d) => {
                     const rel = { id: d.id, ...d.data() };
-                    if (rel.userData) return rel; 
                     if (rel.uid) {
                         const userDoc = await getDoc(doc(db, "users", rel.uid));
-                        if (userDoc.exists()) return { ...rel, userData: userDoc.data() };
+                        if (userDoc.exists()) {
+                            rel.userData = userDoc.data();
+                            if (rel.status === 'friends') {
+                                const channelId = [currentUser.uid, rel.uid].sort().join('_');
+                                const messagesRef = collection(db, "chats", channelId, "messages");
+                                const q = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
+                                const lastMessageSnapshot = await getDocs(q);
+                                if (!lastMessageSnapshot.empty) {
+                                    rel.lastMessage = lastMessageSnapshot.docs[0].data();
+                                    const unreadMessagesQuery = query(messagesRef, where('readBy', 'not-in', [[currentUser.uid]]));
+                                    const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
+                                    rel.unreadCount = unreadMessagesSnapshot.size;
+                                }
+                            }
+                            return rel;
+                        }
                     }
                     return null;
                 });
@@ -213,7 +227,7 @@
         }
 
         function renderUserInList(relationship) {
-            const { userData, status } = relationship;
+            const { userData, status, lastMessage, unreadCount } = relationship;
             const userElement = document.createElement('div');
             userElement.setAttribute('data-search-name', `${userData.displayName.toLowerCase()} ${userData.username.toLowerCase()}`);
             userElement.className = 'p-2 flex items-center justify-between cursor-pointer themed-hover rounded-lg transition';
@@ -231,7 +245,13 @@
                     actionHtml = `<button class="accept-req-btn-sidebar text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md" data-uid="${userData.uid}">Accept</button>`;
                     break;
                 case 'friends':
-                    statusText = `<p class="status-text text-sm text-gray-500">You are now friends!</p>`;
+                    if (unreadCount > 0) {
+                        statusText = `<p class="status-text text-sm text-green-400 font-bold">${unreadCount} new message${unreadCount > 1 ? 's' : ''}</p>`;
+                    } else if (lastMessage) {
+                        statusText = `<p class="status-text text-sm text-gray-500 truncate">${lastMessage.text}</p>`;
+                    } else {
+                        statusText = `<p class="status-text text-sm text-gray-500">You are now friends!</p>`;
+                    }
                     break;
             }
 
@@ -369,7 +389,14 @@
             messagesUnsubscribe = onSnapshot(query(messagesRef, orderBy("timestamp")), (snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     const messageData = { id: change.doc.id, ...change.doc.data() };
-                    if (change.type === "added") displayMessage(messageData);
+                    if (change.type === "added") {
+                        displayMessage(messageData);
+                        if (messageData.from !== currentUser.uid && !messageData.readBy?.includes(currentUser.uid)) {
+                            updateDoc(doc(db, "chats", channelId, "messages", change.doc.id), {
+                                readBy: arrayUnion(currentUser.uid)
+                            });
+                        }
+                    }
                     if (change.type === "modified") updateMessage(messageData);
                     if (change.type === "removed") document.getElementById(change.doc.id)?.remove();
                 });
@@ -427,7 +454,7 @@
             const text = messageInput.value.trim();
             if (text && currentChatPartner) {
                 const channelId = [currentUser.uid, currentChatPartner.uid].sort().join('_');
-                const messageData = { text, from: currentUser.uid, to: currentChatPartner.uid, timestamp: serverTimestamp(), reactions: {} };
+                const messageData = { text, from: currentUser.uid, to: currentChatPartner.uid, timestamp: serverTimestamp(), reactions: {}, readBy: [currentUser.uid] };
                 if (replyState.active) { messageData.replyToId = replyState.messageId; messageData.replyToText = replyState.text; }
                 addDoc(collection(db, "chats", channelId, "messages"), messageData);
                 messageInput.value = '';
@@ -444,12 +471,16 @@
             popover.dataset.messageId = message.id;
             popover.dataset.messageText = message.text;
             document.getElementById('action-delete').style.display = message.from === currentUser.uid ? 'block' : 'none';
+            
+            popover.className = `absolute bg-gray-900 rounded-lg shadow-xl z-50 text-white text-sm border border-gray-700`;
+
             const rect = event.currentTarget.getBoundingClientRect();
             const popoverHeight = popover.offsetHeight;
             popover.style.top = `${rect.top - popoverHeight - 10}px`;
             popover.style.left = `${rect.left + rect.width / 2 - popover.offsetWidth / 2}px`;
             setTimeout(() => document.addEventListener('click', hidePopover, { once: true }), 0);
         }
+
         function hidePopover() { popover.classList.add('hidden'); }
         document.getElementById('action-reply').addEventListener('click', () => { replyState = { active: true, messageId: popover.dataset.messageId, text: popover.dataset.messageText }; replyPreviewText.textContent = replyState.text; replyPreviewBar.classList.remove('hidden'); messageInput.focus(); hidePopover(); });
         cancelReplyBtn.addEventListener('click', cancelReply);
@@ -488,7 +519,14 @@
                     newBackgroundUrl = await getDownloadURL(storageRef);
                 }
                 const newTheme = { myBubbleColor: myBubbleColorInput.value, friendBubbleColor: friendBubbleColorInput.value, backgroundImage: newBackgroundUrl };
-                await updateDoc(doc(db, `users/${currentUser.uid}/relationships/${currentChatPartner.uid}`), { theme: newTheme });
+                
+                const batch = writeBatch(db);
+                const myRelationshipRef = doc(db, `users/${currentUser.uid}/relationships/${currentChatPartner.uid}`);
+                const partnerRelationshipRef = doc(db, `users/${currentChatPartner.uid}/relationships/${currentUser.uid}`);
+                batch.update(myRelationshipRef, { theme: newTheme });
+                batch.update(partnerRelationshipRef, { theme: newTheme });
+                await batch.commit();
+
                 applyTheme(newTheme);
             } catch (error) { console.error("Error saving theme:", error); alert("Could not save theme."); }
             saveThemeBtn.textContent = 'Save';
