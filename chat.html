@@ -126,7 +126,7 @@
         const profileDropdownBtn = document.getElementById('profile-dropdown-btn');
         const profileDropdown = document.getElementById('profile-dropdown');
         const logoutDropdownBtn = document.getElementById('logout-btn-dropdown');
-        const friendFilterInput = document.getElementById('friend-filter-input'); // New element
+        const friendFilterInput = document.getElementById('friend-filter-input');
 
         let currentUser = null;
         let currentUserData = null;
@@ -211,25 +211,26 @@
         function renderUserInList(relationship) {
             const { userData, status } = relationship;
             const userElement = document.createElement('div');
-            // Add a data attribute for searching
             userElement.setAttribute('data-search-name', `${userData.displayName.toLowerCase()} ${userData.username.toLowerCase()}`);
             userElement.className = 'p-2 flex items-center justify-between cursor-pointer themed-hover rounded-lg transition';
             
             let pfpHtml = userData.photoURL ? `<img src="${userData.photoURL}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white ${userData.pfpColor}">${(userData.displayName || '?').charAt(0).toUpperCase()}</div>`;
             
-            let statusHtml = '';
+            // --- UI LOGIC MODIFIED HERE ---
+            let statusText = '';
+            let actionHtml = '';
+
             switch (status) {
                 case 'sent':
-                    statusHtml = `<div class="text-right"><p class="text-sm text-gray-400">Request Sent</p></div>`;
+                    statusText = `<p class="status-text text-sm text-gray-400">Request Sent</p>`;
                     userElement.classList.replace('cursor-pointer', 'cursor-default');
                     break;
                 case 'received':
-                    statusHtml = `<div class="flex gap-2">
-                                    <button class="accept-req-btn-sidebar text-xs bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-md" data-uid="${userData.uid}">Accept</button>
-                                  </div>`;
+                    statusText = `<p class="status-text text-sm text-blue-400">Friend Request</p>`;
+                    actionHtml = `<button class="accept-req-btn-sidebar text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md" data-uid="${userData.uid}">Accept</button>`;
                     break;
                 case 'friends':
-                    statusHtml = ``; 
+                    statusText = `<p class="status-text text-sm text-gray-500">Start chatting</p>`; // Placeholder for last message
                     break;
             }
 
@@ -238,87 +239,53 @@
                     ${pfpHtml}
                     <div>
                         <p class="font-semibold text-white">${userData.displayName}</p>
-                        <p class="text-sm text-gray-400">@${userData.username}</p>
+                        ${statusText}
                     </div>
                 </div>
-                ${statusHtml}`;
-
+                <div class="action-container">${actionHtml}</div>`;
+            
             if (status === 'friends') {
                  userElement.addEventListener('click', () => startChat(userData));
             } else if (status === 'received') {
                 const acceptBtn = userElement.querySelector('.accept-req-btn-sidebar');
+                const actionContainer = userElement.querySelector('.action-container');
+                const statusTextElement = userElement.querySelector('.status-text');
+
                 acceptBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    acceptBtn.textContent = '...';
-                    acceptBtn.disabled = true;
+                    
+                    // Optimistic UI Update: Change UI immediately for better UX
+                    actionContainer.innerHTML = ''; // Remove the button
+                    statusTextElement.textContent = 'You are now friends!';
+                    statusTextElement.className = 'status-text text-sm text-green-400';
+                    userElement.classList.replace('cursor-pointer', 'cursor-default'); // Temporarily disable click
+
+                    // Update database in the background
                     await acceptFriendRequest(userData.uid);
+                    
+                    // The onSnapshot listener will eventually re-render the list correctly,
+                    // making this user a clickable friend.
                 });
             }
             userList.appendChild(userElement);
         }
 
-        // --- Add Friends Popover ---
-        // ... (This section remains unchanged from the previous update)
+        // --- Add Friends Popover (No Changes Here) ---
         addFriendsPopoverBtn.addEventListener('click', (e) => { e.stopPropagation(); addFriendsPopover.classList.toggle('hidden'); if (!addFriendsPopover.classList.contains('hidden')) { initializePopover(); } });
-        async function initializePopover() {
-            const searchInput = document.getElementById('user-search-input'); const popoverContent = document.getElementById('popover-content');
-            const render = (html) => popoverContent.innerHTML = html;
-            const requestsQuery = query(collection(db, `users/${currentUser.uid}/relationships`), where("status", "==", "received")); const requestSnapshot = await getDocs(requestsQuery);
-            let requestHtml = '';
-            if (!requestSnapshot.empty) {
-                requestSnapshot.docs.forEach(doc => { const req = doc.data(); const pfp = req.userData.photoURL ? `<img src="${req.userData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${req.userData.pfpColor}">${req.userData.displayName.charAt(0).toUpperCase()}</div>`; requestHtml += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg" data-uid="${req.userData.uid}"><div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${req.userData.displayName}</p><p class="text-xs text-gray-400">@${req.userData.username}</p></div></div><button class="accept-req-btn text-sm bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md" data-uid="${req.userData.uid}">Accept</button></div>`; });
-                render(`<div class="p-2 text-left">${requestHtml}</div>`);
-            } else { render('<p class="text-gray-400 text-sm p-4">Search for users to add them.</p>'); }
-            popoverContent.addEventListener('click', async (e) => {
-                const target = e.target.closest('button'); if (!target) return;
-                const recipientId = target.dataset.uid;
-                if (target.matches('.add-friend-btn')) { target.disabled = true; target.textContent = 'Sent'; target.classList.replace('bg-gray-600', 'bg-gray-800'); await sendFriendRequest(recipientId); } else if (target.matches('.accept-req-btn')) { target.disabled = true; target.textContent = 'Accepted'; await acceptFriendRequest(recipientId); target.closest('[data-uid]').remove(); }
-            });
-            searchInput.addEventListener('input', async () => {
-                const searchTerm = searchInput.value.trim().toLowerCase(); if (searchTerm.length < 2) { initializePopover(); return; }
-                try {
-                    if (!allUsersCache) { const usersSnapshot = await getDocs(collection(db, 'users')); allUsersCache = usersSnapshot.docs.map(doc => doc.data()); }
-                    const myRelationshipsSnap = await getDocs(collection(db, `users/${currentUser.uid}/relationships`)); const excludedIds = new Set([currentUser.uid, ...myRelationshipsSnap.docs.map(d => d.id)]);
-                    const results = allUsersCache.filter(user => !excludedIds.has(user.uid) && (user.username.toLowerCase().includes(searchTerm) || user.displayName.toLowerCase().includes(searchTerm)));
-                    if (results.length === 0) { render('<p class="text-gray-400 text-sm p-4">No users found.</p>'); } else { let userItems = ''; results.forEach(user => { let pfp = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor}">${user.displayName.charAt(0).toUpperCase()}</div>`; userItems += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg"><div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${user.displayName}</p><p class="text-xs text-gray-400">@${user.username}</p></div></div><button class="add-friend-btn text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-md" data-uid="${user.uid}">Add</button></div>`; }); render(`<div class="p-2 text-left">${userItems}</div>`); }
-                } catch (error) { console.error("Search Error: ", error); render('<p class="text-red-400 text-sm p-4">Could not perform search.</p>'); }
-            });
-        }
+        async function initializePopover() { /* ... unchanged ... */ const searchInput = document.getElementById('user-search-input'); const popoverContent = document.getElementById('popover-content'); const render = (html) => popoverContent.innerHTML = html; const requestsQuery = query(collection(db, `users/${currentUser.uid}/relationships`), where("status", "==", "received")); const requestSnapshot = await getDocs(requestsQuery); let requestHtml = ''; if (!requestSnapshot.empty) { requestSnapshot.docs.forEach(doc => { const req = doc.data(); const pfp = req.userData.photoURL ? `<img src="${req.userData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${req.userData.pfpColor}">${req.userData.displayName.charAt(0).toUpperCase()}</div>`; requestHtml += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg" data-uid="${req.userData.uid}"><div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${req.userData.displayName}</p><p class="text-xs text-gray-400">@${req.userData.username}</p></div></div><button class="accept-req-btn text-sm bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md" data-uid="${req.userData.uid}">Accept</button></div>`; }); render(`<div class="p-2 text-left">${requestHtml}</div>`); } else { render('<p class="text-gray-400 text-sm p-4">Search for users to add them.</p>'); } popoverContent.addEventListener('click', async (e) => { const target = e.target.closest('button'); if (!target) return; const recipientId = target.dataset.uid; if (target.matches('.add-friend-btn')) { target.disabled = true; target.textContent = 'Sent'; target.classList.replace('bg-gray-600', 'bg-gray-800'); await sendFriendRequest(recipientId); } else if (target.matches('.accept-req-btn')) { target.disabled = true; target.textContent = 'Accepted'; await acceptFriendRequest(recipientId); target.closest('[data-uid]').remove(); } }); searchInput.addEventListener('input', async () => { const searchTerm = searchInput.value.trim().toLowerCase(); if (searchTerm.length < 2) { initializePopover(); return; } try { if (!allUsersCache) { const usersSnapshot = await getDocs(collection(db, 'users')); allUsersCache = usersSnapshot.docs.map(doc => doc.data()); } const myRelationshipsSnap = await getDocs(collection(db, `users/${currentUser.uid}/relationships`)); const excludedIds = new Set([currentUser.uid, ...myRelationshipsSnap.docs.map(d => d.id)]); const results = allUsersCache.filter(user => !excludedIds.has(user.uid) && (user.username.toLowerCase().includes(searchTerm) || user.displayName.toLowerCase().includes(searchTerm))); if (results.length === 0) { render('<p class="text-gray-400 text-sm p-4">No users found.</p>'); } else { let userItems = ''; results.forEach(user => { let pfp = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor}">${user.displayName.charAt(0).toUpperCase()}</div>`; userItems += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg"><div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${user.displayName}</p><p class="text-xs text-gray-400">@${user.username}</p></div></div><button class="add-friend-btn text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-md" data-uid="${user.uid}">Add</button></div>`; }); render(`<div class="p-2 text-left">${userItems}</div>`); } } catch (error) { console.error("Search Error: ", error); render('<p class="text-red-400 text-sm p-4">Could not perform search.</p>'); } }); }
         async function sendFriendRequest(recipientId) { try { const recipientDocSnap = await getDoc(doc(db, 'users', recipientId)); if (!recipientDocSnap.exists()) throw new Error("User not found"); const batch = writeBatch(db); const timestamp = serverTimestamp(); const senderRef = doc(db, `users/${currentUser.uid}/relationships/${recipientId}`); batch.set(senderRef, { status: 'sent', userData: recipientDocSnap.data(), timestamp }); const recipientRef = doc(db, `users/${recipientId}/relationships/${currentUser.uid}`); batch.set(recipientRef, { status: 'received', userData: currentUserData, timestamp }); await batch.commit(); } catch (error) { console.error("Error sending friend request:", error); } }
         async function acceptFriendRequest(friendId) { try { const batch = writeBatch(db); const timestamp = serverTimestamp(); const myRef = doc(db, `users/${currentUser.uid}/relationships/${friendId}`); batch.update(myRef, { status: 'friends', timestamp }); const friendRef = doc(db, `users/${friendId}/relationships/${currentUser.uid}`); batch.update(friendRef, { status: 'friends', timestamp }); await batch.commit(); } catch (error) { console.error("Error accepting friend request:", error); } }
 
-        // --- Chat Logic ---
-        // ... (This section remains unchanged)
-        function startChat(partnerData) { currentChatPartner = partnerData; mainChatArea.classList.remove('hidden'); mainChatArea.classList.add('flex'); chatWithName.textContent = partnerData.displayName; messageInputContainer.classList.remove('hidden'); chatMessages.innerHTML = ''; let pfpHtml = partnerData.photoURL ? `<img src="${partnerData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${partnerData.pfpColor}">${(partnerData.displayName || '?').charAt(0).toUpperCase()}</div>`; chatHeaderPfp.innerHTML = pfpHtml; if (window.innerWidth < 1024) { sidebar.classList.add('-translate-x-full'); } const channelId = [currentUser.uid, partnerData.uid].sort().join('_'); const messagesRef = collection(db, "chats", channelId, "messages"); onSnapshot(query(messagesRef, orderBy("timestamp")), (snapshot) => { snapshot.docChanges().forEach((change) => { if (change.type === "added") { displayMessage(change.doc.data()); } }); if (snapshot.empty) { chatMessages.innerHTML = `<div class="text-center p-4 themed-text-secondary">No messages yet. Say hello!</div>`; } chatMessages.scrollTop = chatMessages.scrollHeight; }); }
-        function displayMessage(message) { const isSentByMe = message.from === currentUser.uid; const messageElement = document.createElement('div'); messageElement.className = `flex items-end gap-2 ${isSentByMe ? 'justify-end' : 'justify-start'}`; const bubbleClass = isSentByMe ? 'bg-gradient-to-br from-fuchsia-600 to-purple-600 text-white' : 'themed-bg-darker themed-text-header msg-received'; messageElement.innerHTML = `<div class="max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByMe ? 'rounded-br-lg' : 'rounded-bl-lg'} shadow-md ${bubbleClass}"><p class="text-sm break-words">${message.text}</p></div>`; if (chatMessages.querySelector('.themed-text-secondary')) { chatMessages.innerHTML = ''; } chatMessages.appendChild(messageElement); }
+        // --- Chat Logic (No Changes Here) ---
+        function startChat(partnerData) { /* ... unchanged ... */ currentChatPartner = partnerData; mainChatArea.classList.remove('hidden'); mainChatArea.classList.add('flex'); chatWithName.textContent = partnerData.displayName; messageInputContainer.classList.remove('hidden'); chatMessages.innerHTML = ''; let pfpHtml = partnerData.photoURL ? `<img src="${partnerData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${partnerData.pfpColor}">${(partnerData.displayName || '?').charAt(0).toUpperCase()}</div>`; chatHeaderPfp.innerHTML = pfpHtml; if (window.innerWidth < 1024) { sidebar.classList.add('-translate-x-full'); } const channelId = [currentUser.uid, partnerData.uid].sort().join('_'); const messagesRef = collection(db, "chats", channelId, "messages"); onSnapshot(query(messagesRef, orderBy("timestamp")), (snapshot) => { snapshot.docChanges().forEach((change) => { if (change.type === "added") { displayMessage(change.doc.data()); } }); if (snapshot.empty) { chatMessages.innerHTML = `<div class="text-center p-4 themed-text-secondary">No messages yet. Say hello!</div>`; } chatMessages.scrollTop = chatMessages.scrollHeight; }); }
+        function displayMessage(message) { /* ... unchanged ... */ const isSentByMe = message.from === currentUser.uid; const messageElement = document.createElement('div'); messageElement.className = `flex items-end gap-2 ${isSentByMe ? 'justify-end' : 'justify-start'}`; const bubbleClass = isSentByMe ? 'bg-gradient-to-br from-fuchsia-600 to-purple-600 text-white' : 'themed-bg-darker themed-text-header msg-received'; messageElement.innerHTML = `<div class="max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByMe ? 'rounded-br-lg' : 'rounded-bl-lg'} shadow-md ${bubbleClass}"><p class="text-sm break-words">${message.text}</p></div>`; if (chatMessages.querySelector('.themed-text-secondary')) { chatMessages.innerHTML = ''; } chatMessages.appendChild(messageElement); }
         messageForm.addEventListener('submit', (e) => { e.preventDefault(); const text = messageInput.value.trim(); if (text && currentChatPartner) { const channelId = [currentUser.uid, currentChatPartner.uid].sort().join('_'); addDoc(collection(db, "chats", channelId, "messages"), { text, from: currentUser.uid, to: currentChatPartner.uid, timestamp: serverTimestamp() }); messageInput.value = ''; } });
         
-        // --- Utility Listeners ---
+        // --- Utility Listeners (No Changes Here) ---
         toggleSidebar.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
         logoutDropdownBtn.addEventListener('click', () => signOut(auth));
-        document.addEventListener('click', (e) => {
-            if (!addFriendsPopover.classList.contains('hidden') && !addFriendsPopoverBtn.contains(e.target) && !addFriendsPopover.contains(e.target)) {
-                addFriendsPopover.classList.add('hidden');
-            }
-            if (!profileDropdown.classList.contains('hidden') && !profileDropdownBtn.contains(e.target)) {
-                profileDropdown.classList.add('hidden');
-            }
-        });
-
-        // NEW: Event Listener for the Friend Filter Search Bar
-        friendFilterInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const allUsersInList = userList.querySelectorAll('[data-search-name]');
-
-            allUsersInList.forEach(userElement => {
-                const name = userElement.getAttribute('data-search-name');
-                if (name.includes(searchTerm)) {
-                    userElement.style.display = 'flex'; // Use 'flex' since that's what the elements use
-                } else {
-                    userElement.style.display = 'none';
-                }
-            });
-        });
+        document.addEventListener('click', (e) => { if (!addFriendsPopover.classList.contains('hidden') && !addFriendsPopoverBtn.contains(e.target) && !addFriendsPopover.contains(e.target)) { addFriendsPopover.classList.add('hidden'); } if (!profileDropdown.classList.contains('hidden') && !profileDropdownBtn.contains(e.target)) { profileDropdown.classList.add('hidden'); } });
+        friendFilterInput.addEventListener('input', (e) => { const searchTerm = e.target.value.toLowerCase(); const allUsersInList = userList.querySelectorAll('[data-search-name]'); allUsersInList.forEach(userElement => { const name = userElement.getAttribute('data-search-name'); if (name.includes(searchTerm)) { userElement.style.display = 'flex'; } else { userElement.style.display = 'none'; } }); });
 
     </script>
 </body>
