@@ -12,18 +12,6 @@
         #chat-messages::-webkit-scrollbar-track, #user-list::-webkit-scrollbar-track, #popover-content::-webkit-scrollbar-track { background: transparent; }
         #chat-messages::-webkit-scrollbar-thumb, #user-list::-webkit-scrollbar-thumb, #popover-content::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 20px; }
         .sidebar { transition: transform 0.3s ease-in-out; }
-        
-        /* Light Theme */
-        body.light { background-color: #f3f4f6; color: #111827; }
-        body.light .themed-bg { background-color: #ffffff; }
-        body.light .themed-bg-darker { background-color: #f9fafb; }
-        body.light .themed-shadow { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
-        body.light .themed-text-header { color: #111827; }
-        body.light .themed-text-secondary { color: #6b7280; }
-        body.light .themed-hover:hover { background-color: #f3f4f6; }
-        body.light .themed-input { background-color: #e5e7eb; color: #111827; border-color: #d1d5db; }
-        body.light .msg-received { background-color: #e5e7eb; color: #111827; }
-
     </style>
 </head>
 <body class="h-screen flex overflow-hidden text-gray-200">
@@ -56,13 +44,9 @@
                                 <svg class="w-5 h-5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                             </div>
                         </div>
-                        <div id="popover-content" class="text-center max-h-96 overflow-y-auto">
-                            </div>
+                        <div id="popover-content" class="text-center max-h-96 overflow-y-auto"></div>
                     </div>
                 </div>
-                 <button id="new-chat-btn" class="p-2 rounded-full themed-hover">
-                    <svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                </button>
             </div>
         </div>
         <div class="px-4 pt-4 pb-2">
@@ -95,10 +79,7 @@
         </div>
     </main>
     
-    <div id="theme-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
-        <div id="modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"></div>
-        </div>
-
+    <div id="theme-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -120,12 +101,13 @@
 
         // --- DOM Elements ---
         const userList = document.getElementById('user-list');
+        const mainChatArea = document.getElementById('main-chat-area');
+        const chatWithName = document.getElementById('chat-with-name');
+        const chatHeaderPfp = document.getElementById('chat-header-pfp');
         const chatMessages = document.getElementById('chat-messages');
         const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
         const messageInputContainer = document.getElementById('message-input-container');
-        const chatWithName = document.getElementById('chat-with-name');
-        const chatHeaderPfp = document.getElementById('chat-header-pfp');
         const sidebar = document.getElementById('sidebar');
         const toggleSidebar = document.getElementById('toggle-sidebar');
         const myPfpSidebar = document.getElementById('my-pfp-sidebar');
@@ -133,7 +115,6 @@
         const addFriendsPopoverBtn = document.getElementById('add-friends-popover-btn');
         const addFriendsPopover = document.getElementById('add-friends-popover');
         const notificationDot = document.getElementById('notification-dot');
-        const mainChatArea = document.getElementById('main-chat-area');
         const profileDropdownBtn = document.getElementById('profile-dropdown-btn');
         const profileDropdown = document.getElementById('profile-dropdown');
         const themeModalBtn = document.getElementById('theme-modal-btn');
@@ -142,35 +123,27 @@
         let currentUser = null;
         let currentUserData = null;
         let currentChatPartner = null;
-        let unsubscribeMessages = null;
-        let unsubscribeRequests = null;
         let allUsersCache = null;
-        let popoverListenersAttached = false;
-        const chatUnsubscribes = new Map();
 
         // --- Auth & Initial Load ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    currentUserData = userDoc.data();
-                    applyTheme(currentUserData.theme);
-                    loadMyProfile(currentUserData);
-                    listenForFriendsAndRequests();
-                    listenForFriendRequests();
-                } else {
-                    window.location.href = './onboarding.html';
-                }
+                const userDocRef = doc(db, "users", user.uid);
+                onSnapshot(userDocRef, (doc) => {
+                    if (doc.exists()) {
+                        currentUserData = doc.data();
+                        loadMyProfile(currentUserData);
+                    } else {
+                         window.location.href = './onboarding.html';
+                    }
+                });
+                listenForRelationships();
             } else {
                 window.location.href = './login.html';
             }
         });
         
-        function applyTheme(theme) {
-            document.body.classList.toggle('light', theme === 'light');
-        }
-
         function loadMyProfile(userData) {
             if (userData.photoURL) {
                 myPfpSidebar.src = userData.photoURL;
@@ -184,264 +157,169 @@
             }
         }
         
-        toggleSidebar.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
-        logoutDropdownBtn.addEventListener('click', () => signOut(auth));
-
-        // --- Profile Dropdown ---
-        profileDropdownBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            profileDropdown.classList.toggle('hidden');
-        });
-
-        // --- Friend & User Management (REVISED)---
-        function listenForFriendsAndRequests() {
-            const friendsRef = collection(db, `users/${currentUser.uid}/friends`);
-            const sentRequestsRef = collection(db, `users/${currentUser.uid}/sentFriendRequests`);
-
-            const render = (friends, sentRequests) => {
-                const combined = new Map();
-                friends.forEach(f => combined.set(f.uid, { ...f, status: 'friend' }));
-                sentRequests.forEach(r => {
-                    if (!combined.has(r.uid)) combined.set(r.uid, { ...r, status: 'pending' });
-                });
-                
+        // --- Relationship & UI Management ---
+        function listenForRelationships() {
+            const relationshipsRef = collection(db, `users/${currentUser.uid}/relationships`);
+            onSnapshot(query(relationshipsRef, orderBy("timestamp", "desc")), (snapshot) => {
                 userList.innerHTML = '';
-                if (combined.size === 0) {
-                    userList.innerHTML = `<div class="text-center p-4 themed-text-secondary">No friends yet. Find people to chat with!</div>`;
-                    return;
+                let hasRequests = false;
+                if (snapshot.empty) {
+                    userList.innerHTML = `<div class="text-center p-4 text-gray-400">No friends yet. Add one!</div>`;
+                } else {
+                    snapshot.forEach(doc => {
+                        const relationship = doc.data();
+                        if (relationship.status === 'received') hasRequests = true;
+                        renderUserInList(relationship);
+                    });
                 }
-                
-                combined.forEach(user => renderUserInList(user));
-            };
-
-            onSnapshot(query(friendsRef, orderBy("displayName")), (friendsSnap) => {
-                const friends = friendsSnap.docs.map(doc => doc.data());
-                onSnapshot(sentRequestsRef, (sentRequestsSnap) => {
-                    const sentRequests = sentRequestsSnap.docs.map(doc => doc.data());
-                    render(friends, sentRequests);
-                });
+                notificationDot.classList.toggle('hidden', !hasRequests);
             });
         }
-        
-        function renderUserInList(userData) {
+
+        function renderUserInList(relationship) {
+            const { userData, status } = relationship;
             const userElement = document.createElement('div');
-            userElement.id = `user-list-item-${userData.uid}`;
             userElement.className = 'p-2 flex items-center justify-between cursor-pointer themed-hover rounded-lg transition';
             
             let pfpHtml = userData.photoURL ? `<img src="${userData.photoURL}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white ${userData.pfpColor}">${(userData.displayName || '?').charAt(0).toUpperCase()}</div>`;
             
-            const statusText = userData.status === 'pending' ? 'Request Sent' : 'New Chat';
+            let statusHtml = '';
+            switch (status) {
+                case 'sent':
+                    statusHtml = `<p class="text-sm text-gray-400">Friend Request Sent</p>`;
+                    break;
+                case 'received':
+                    statusHtml = `<p class="text-sm text-blue-400">Friend Request</p>`;
+                    break;
+                case 'friends':
+                    statusHtml = `<p class="text-sm text-gray-400">New Friend!</p>`;
+                    break;
+            }
 
             userElement.innerHTML = `
                 <div class="flex items-center gap-4">
                     ${pfpHtml}
                     <div>
-                        <p class="font-semibold themed-text-header">${userData.displayName}</p>
-                        <p class="text-sm themed-text-secondary">${statusText}</p>
+                        <p class="font-semibold text-white">${userData.displayName}</p>
+                        ${statusHtml}
                     </div>
-                </div>
-                <div class="unread-badge bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center hidden"></div>`;
+                </div>`;
 
-            if (userData.status !== 'pending') {
-                userElement.addEventListener('click', () => startChat(userData));
+            if (status === 'friends') {
+                 userElement.addEventListener('click', () => startChat(userData));
             }
-
             userList.appendChild(userElement);
-
-            // Listen for unread messages
-            if (userData.status === 'friend') {
-                const channelId = [currentUser.uid, userData.uid].sort().join('_');
-                const messagesRef = collection(db, "chats", channelId, "messages");
-                const lastReadTimestamp = currentUserData.lastRead?.[channelId] || new Timestamp(0, 0);
-                
-                const q = query(messagesRef, where('from', '==', userData.uid), where('timestamp', '>', lastReadTimestamp));
-                
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    const badge = userElement.querySelector('.unread-badge');
-                    if (snapshot.size > 0) {
-                        badge.textContent = snapshot.size > 9 ? '9+' : snapshot.size;
-                        badge.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
-                    }
-                });
-                chatUnsubscribes.set(userData.uid, unsubscribe);
-            }
         }
 
         // --- Add Friends Popover ---
-        let requestsHtml = '';
-        let searchHtml = '';
-
-        function renderPopoverContent() {
-            const popoverContent = document.getElementById('popover-content');
-            if (!popoverContent) return;
-            
-            if (searchHtml) {
-                popoverContent.innerHTML = searchHtml;
-            } else if (requestsHtml) {
-                popoverContent.innerHTML = requestsHtml;
-            } else {
-                popoverContent.innerHTML = '<p class="text-gray-400 text-sm p-4">New friend requests will appear here</p>';
-            }
-        }
-
         addFriendsPopoverBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             addFriendsPopover.classList.toggle('hidden');
-            
-            if (!addFriendsPopover.classList.contains('hidden') && !popoverListenersAttached) {
-                popoverListenersAttached = true;
-                const searchInput = document.getElementById('user-search-input');
-                const popoverContent = document.getElementById('popover-content');
+            if (!addFriendsPopover.classList.contains('hidden')) {
+                initializePopover();
+            }
+        });
+
+        function initializePopover() {
+            const searchInput = document.getElementById('user-search-input');
+            const popoverContent = document.getElementById('popover-content');
+
+            const render = (html) => popoverContent.innerHTML = html;
+            render('<p class="text-gray-400 text-sm p-4">New friend requests will appear here</p>');
+
+            // Listener for button clicks inside popover
+            popoverContent.addEventListener('click', async (e) => {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                const recipientId = target.dataset.uid;
+                if (target.matches('.add-friend-btn')) {
+                    target.disabled = true;
+                    await sendFriendRequest(recipientId);
+                    target.textContent = 'Sent';
+                    target.classList.replace('bg-gray-600', 'bg-gray-800');
+                } else if (target.matches('.accept-req-btn')) {
+                    await acceptFriendRequest(recipientId);
+                    target.closest('.request-item').remove();
+                }
+            });
+
+            // Search functionality
+            searchInput.addEventListener('input', async () => {
+                const searchTerm = searchInput.value.trim().toLowerCase();
+                if (searchTerm.length < 1) {
+                    render('<p class="text-gray-400 text-sm p-4">New friend requests will appear here</p>');
+                    return;
+                }
                 
-                // Attach listener for friend requests
-                const requestsRef = collection(db, `users/${currentUser.uid}/friendRequests`);
-                unsubscribeRequests = onSnapshot(query(requestsRef, orderBy('timestamp', 'desc')), (snapshot) => {
-                    if (snapshot.empty) {
-                        requestsHtml = '';
+                try {
+                    if (!allUsersCache) {
+                        const usersSnapshot = await getDocs(collection(db, 'users'));
+                        allUsersCache = usersSnapshot.docs.map(doc => doc.data());
+                    }
+                    
+                    const myRelationshipsSnap = await getDocs(collection(db, `users/${currentUser.uid}/relationships`));
+                    const excludedIds = new Set([currentUser.uid, ...myRelationshipsSnap.docs.map(d => d.id)]);
+                    
+                    const results = allUsersCache.filter(user => {
+                        return !excludedIds.has(user.uid) && 
+                               (user.username.toLowerCase().includes(searchTerm) || user.displayName.toLowerCase().includes(searchTerm));
+                    });
+
+                    if (results.length === 0) {
+                        render('<p class="text-gray-400 text-sm p-4">No users found.</p>');
                     } else {
-                        let reqItems = '';
-                        snapshot.forEach(doc => {
-                            const req = doc.data();
-                            let pfp = req.photoURL ? `<img src="${req.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${req.pfpColor}">${req.displayName.charAt(0).toUpperCase()}</div>`;
-                            reqItems += `<div class="p-2 flex items-center justify-between rounded-lg hover:bg-white/10">
-                                <div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div> <p class="font-semibold">${req.displayName}</p></div>
-                                <div class="flex gap-2"><button class="accept-req-btn text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md" data-id="${req.uid}">Accept</button></div>
+                        let userItems = '';
+                        results.forEach(user => {
+                            let pfp = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor}">${user.displayName.charAt(0).toUpperCase()}</div>`;
+                            userItems += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg">
+                                <div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${user.displayName}</p><p class="text-xs text-gray-400">@${user.username}</p></div></div>
+                                <button class="add-friend-btn text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-md" data-uid="${user.uid}">Add</button>
                             </div>`;
                         });
-                        requestsHtml = `<div class="p-2">${reqItems}</div>`;
+                        render(`<div class="p-2 text-left">${userItems}</div>`);
                     }
-                    renderPopoverContent();
-                });
-
-                // Attach listener for search input
-                searchInput.addEventListener('input', async () => {
-                     try {
-                        const searchTerm = searchInput.value.trim().toLowerCase();
-                        if (searchTerm.length < 1) {
-                            searchHtml = '';
-                            renderPopoverContent();
-                            return;
-                        }
-
-                        if (!allUsersCache) {
-                            const usersSnapshot = await getDocs(collection(db, 'users'));
-                            allUsersCache = usersSnapshot.docs.map(doc => doc.data());
-                        }
-
-                        const friendsSnap = await getDocs(collection(db, `users/${currentUser.uid}/friends`));
-                        const sentReqSnap = await getDocs(collection(db, `users/${currentUser.uid}/sentFriendRequests`));
-                        const receivedReqSnap = await getDocs(collection(db, `users/${currentUser.uid}/friendRequests`));
-                        const excludedIds = new Set([currentUser.uid, ...friendsSnap.docs.map(d=>d.id), ...sentReqSnap.docs.map(d=>d.id), ...receivedReqSnap.docs.map(d=>d.id)]);
-
-                        const results = allUsersCache.filter(user => {
-                            const displayName = user.displayName || '';
-                            const username = user.username || '';
-                            if (excludedIds.has(user.uid)) return false;
-                            
-                            return username.toLowerCase().includes(searchTerm) || 
-                                   displayName.toLowerCase().includes(searchTerm);
-                        });
-
-                        if (results.length === 0) {
-                            searchHtml = '<p class="text-gray-400 text-sm p-4">No users found.</p>';
-                        } else {
-                            let userItems = '';
-                            results.forEach(user => {
-                                let pfp = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor}">${user.displayName.charAt(0).toUpperCase()}</div>`;
-                                userItems += `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg">
-                                    <div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${user.displayName}</p><p class="text-xs text-gray-400">@${user.username}</p></div></div>
-                                    <button class="add-friend-btn text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-md" data-uid="${user.uid}">Add</button>
-                                </div>`;
-                            });
-                            searchHtml = `<div class="p-2 text-left">${userItems}</div>`;
-                        }
-                    } catch (error) {
-                        console.error("Error during user search:", error);
-                        searchHtml = '<p class="text-red-400 text-sm p-4">Could not perform search.</p>';
-                    }
-                    renderPopoverContent();
-                });
-
-
-                // Attach listener for button clicks inside popover
-                popoverContent.addEventListener('click', async (e) => {
-                    const target = e.target.closest('button');
-                    if (!target) return;
-
-                    if (target.matches('.add-friend-btn')) {
-                        target.disabled = true;
-                        const recipientId = target.dataset.uid;
-                        const userDoc = await getDoc(doc(db, 'users', recipientId));
-                        if(userDoc.exists()) {
-                           await sendFriendRequest(recipientId, userDoc.data());
-                        }
-                        target.textContent = 'Sent';
-                        target.classList.replace('bg-gray-600', 'bg-gray-800');
-                    } else if (target.matches('.accept-req-btn')) {
-                        const friendId = target.dataset.id;
-                        const batch = writeBatch(db);
-                        const friendDoc = await getDoc(doc(db, 'users', friendId));
-                        if (friendDoc.exists()) {
-                            batch.set(doc(db, `users/${currentUser.uid}/friends/${friendId}`), friendDoc.data());
-                            batch.set(doc(db, `users/${friendId}/friends/${currentUser.uid}`), currentUserData);
-                        }
-                        batch.delete(doc(db, `users/${currentUser.uid}/friendRequests/${friendId}`));
-                        batch.delete(doc(db, `users/${friendId}/sentFriendRequests/${currentUser.uid}`));
-                        await batch.commit();
-                    }
-                });
-            }
-        });
-
-        // Close popover when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!addFriendsPopover.classList.contains('hidden') && !addFriendsPopoverBtn.contains(e.target) && !addFriendsPopover.contains(e.target)) {
-                addFriendsPopover.classList.add('hidden');
-            }
-            if (!profileDropdown.classList.contains('hidden') && !profileDropdownBtn.contains(e.target)) {
-                profileDropdown.classList.add('hidden');
-            }
-        });
-        
-        // --- Friend Request Logic (REVISED) ---
-        async function sendFriendRequest(recipientId, recipientData) {
-            const batch = writeBatch(db);
-            batch.set(doc(db, `users/${recipientId}/friendRequests/${currentUser.uid}`), { uid: currentUser.uid, displayName: currentUserData.displayName, photoURL: currentUserData.photoURL || null, pfpColor: currentUserData.pfpColor, timestamp: serverTimestamp() });
-            batch.set(doc(db, `users/${currentUser.uid}/sentFriendRequests/${recipientId}`), { ...recipientData, timestamp: serverTimestamp() });
-            await batch.commit();
-        }
-
-        function listenForFriendRequests() {
-            onSnapshot(collection(db, `users/${currentUser.uid}/friendRequests`), (snap) => {
-                notificationDot.classList.toggle('hidden', snap.empty);
+                } catch (error) {
+                    render('<p class="text-red-400 text-sm p-4">Could not perform search.</p>');
+                }
             });
         }
         
-        // --- Theme Modal ---
-        themeModalBtn.addEventListener('click', () => {
-            const themeModal = document.getElementById('theme-modal');
-            themeModal.classList.remove('hidden');
-            themeModal.innerHTML = `<div id="modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"></div>
-            <div class="themed-bg-darker relative border-transparent shadow-2xl rounded-2xl p-6 max-w-xs w-full z-50" style="background-color: #181818;">
-                <h3 class="text-xl font-bold mb-4">Display Theme</h3>
-                <div class="space-y-2">
-                    <button class="theme-option-btn w-full text-left p-2 rounded-md themed-hover" data-theme="dark">Always Dark</button>
-                    <button class="theme-option-btn w-full text-left p-2 rounded-md themed-hover" data-theme="light">Always Light</button>
-                </div>
-            </div>`;
-            themeModal.querySelector('#modal-backdrop').addEventListener('click', () => themeModal.classList.add('hidden'));
-            themeModal.querySelectorAll('.theme-option-btn').forEach(btn => btn.addEventListener('click', async (e) => {
-                const newTheme = e.target.dataset.theme;
-                await updateDoc(doc(db, "users", currentUser.uid), { theme: newTheme });
-                applyTheme(newTheme);
-                themeModal.classList.add('hidden');
-            }));
-        });
+        async function sendFriendRequest(recipientId) {
+            const recipientDoc = await getDoc(doc(db, 'users', recipientId));
+            if (!recipientDoc.exists()) return;
+
+            const batch = writeBatch(db);
+            const timestamp = serverTimestamp();
+            
+            // For sender
+            const senderRef = doc(db, `users/${currentUser.uid}/relationships/${recipientId}`);
+            batch.set(senderRef, { status: 'sent', userData: recipientDoc.data(), timestamp });
+            
+            // For recipient
+            const recipientRef = doc(db, `users/${recipientId}/relationships/${currentUser.uid}`);
+            batch.set(recipientRef, { status: 'received', userData: currentUserData, timestamp });
+
+            await batch.commit();
+        }
+
+        async function acceptFriendRequest(friendId) {
+            const batch = writeBatch(db);
+            const timestamp = serverTimestamp();
+            
+            // Update my relationship doc
+            const myRef = doc(db, `users/${currentUser.uid}/relationships/${friendId}`);
+            batch.update(myRef, { status: 'friends', timestamp });
+            
+            // Update their relationship doc
+            const friendRef = doc(db, `users/${friendId}/relationships/${currentUser.uid}`);
+            batch.update(friendRef, { status: 'friends', timestamp });
+            
+            await batch.commit();
+        }
 
         // --- Chat Logic ---
-        async function startChat(partnerData) {
+        function startChat(partnerData) {
             currentChatPartner = partnerData;
             mainChatArea.classList.remove('hidden');
             mainChatArea.classList.add('flex');
@@ -453,21 +331,10 @@
             chatHeaderPfp.innerHTML = pfpHtml;
 
             if (window.innerWidth < 1024) { sidebar.classList.add('-translate-x-full'); }
-
-            if (unsubscribeMessages) unsubscribeMessages();
             
             const channelId = [currentUser.uid, partnerData.uid].sort().join('_');
-            
-            // Mark messages as read
-            const userDocRef = doc(db, "users", currentUser.uid);
-            await updateDoc(userDocRef, {
-                [`lastRead.${channelId}`]: serverTimestamp()
-            });
-
             const messagesRef = collection(db, "chats", channelId, "messages");
-            const q = query(messagesRef, orderBy("timestamp"));
-
-            unsubscribeMessages = onSnapshot(q, (snapshot) => {
+            onSnapshot(query(messagesRef, orderBy("timestamp")), (snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === "added") { displayMessage(change.doc.data()); }
                 });
@@ -491,8 +358,20 @@
             const text = messageInput.value.trim();
             if (text && currentChatPartner) {
                 const channelId = [currentUser.uid, currentChatPartner.uid].sort().join('_');
-                addDoc(collection(db, "chats", channelId, "messages"), { text: text, from: currentUser.uid, to: currentChatPartner.uid, timestamp: serverTimestamp() });
+                addDoc(collection(db, "chats", channelId, "messages"), { text, from: currentUser.uid, to: currentChatPartner.uid, timestamp: serverTimestamp() });
                 messageInput.value = '';
+            }
+        });
+        
+        // --- Utility Listeners ---
+        toggleSidebar.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
+        logoutDropdownBtn.addEventListener('click', () => signOut(auth));
+        document.addEventListener('click', (e) => {
+            if (!addFriendsPopover.classList.contains('hidden') && !addFriendsPopoverBtn.contains(e.target) && !addFriendsPopover.contains(e.target)) {
+                addFriendsPopover.classList.add('hidden');
+            }
+            if (!profileDropdown.classList.contains('hidden') && !profileDropdownBtn.contains(e.target)) {
+                profileDropdown.classList.add('hidden');
             }
         });
 
