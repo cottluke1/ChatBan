@@ -20,13 +20,41 @@
     <aside id="sidebar" class="themed-bg-darker backdrop-blur-xl w-full md:w-96 flex-shrink-0 flex flex-col sidebar absolute lg:relative -translate-x-full lg:translate-x-0 z-30 h-full" style="background-color: #181818;">
         <div class="h-20 flex-shrink-0 px-4 flex items-center justify-between themed-shadow" style="box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5);">
             <div class="flex items-center gap-3">
-                <div class="relative"><button id="profile-dropdown-btn"><img id="my-pfp-sidebar" src="" class="w-10 h-10 rounded-full object-cover hidden"><div id="my-pfp-initial-sidebar" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"></div></button><div id="profile-dropdown" class="absolute top-12 left-0 w-48 bg-gray-800 rounded-lg shadow-lg py-1 hidden z-50"><button id="theme-modal-btn" class="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700">Theme</button><a href="./profile.html" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700">Profile</a><button id="logout-btn-dropdown" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700">Logout</button></div></div>
+                <div class="relative">
+                    <button id="profile-dropdown-btn">
+                        <img id="my-pfp-sidebar" src="" class="w-10 h-10 rounded-full object-cover hidden">
+                        <div id="my-pfp-initial-sidebar" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"></div>
+                    </button>
+                    <div id="profile-dropdown" class="absolute top-12 left-0 w-48 bg-gray-800 rounded-lg shadow-lg py-1 hidden z-50">
+                        <a href="./profile.html" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700">Profile</a>
+                        <button id="logout-btn-dropdown" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700">Logout</button>
+                    </div>
+                </div>
             </div>
             <div class="flex items-center">
-                <div class="relative"><button id="add-friends-popover-btn" class="p-2 rounded-full themed-hover relative"><svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg><div id="notification-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></div></button><div id="add-friends-popover" class="hidden absolute top-full right-0 mt-2 w-80 rounded-xl shadow-lg z-50" style="background-color: #262626;"><div class="p-2"><div class="relative"><input type="text" id="user-search-input" placeholder="Search by username..." autocomplete="off" class="w-full pl-9 pr-4 py-2 border-transparent rounded-lg focus:outline-none text-white" style="background-color: #3a3a3a;"><svg class="w-5 h-5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div></div><div id="popover-content" class="text-center max-h-96 overflow-y-auto"></div></div></div>
+                 <div class="relative">
+                    <button id="add-friends-popover-btn" class="p-2 rounded-full themed-hover relative">
+                        <svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                        <div id="notification-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></div>
+                    </button>
+                    <div id="add-friends-popover" class="hidden absolute top-full right-0 mt-2 w-80 rounded-xl shadow-lg z-50" style="background-color: #262626;">
+                        <div class="p-2">
+                            <div class="relative">
+                                <input type="text" id="user-search-input" placeholder="Search by username..." autocomplete="off" class="w-full pl-9 pr-4 py-2 border-transparent rounded-lg focus:outline-none text-white" style="background-color: #3a3a3a;">
+                                <svg class="w-5 h-5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                        </div>
+                        <div id="popover-content" class="text-center max-h-96 overflow-y-auto"></div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="px-4 pt-4 pb-2"><div class="relative"><input type="text" id="friend-filter-input" placeholder="Search chats..." class="w-full pl-9 pr-4 py-2 border-transparent rounded-lg focus:outline-none text-white" style="background-color: #282828;"><svg class="w-5 h-5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div></div>
+        <div class="px-4 pt-4 pb-2">
+            <div class="relative">
+                <input type="text" id="friend-filter-input" placeholder="Search chats..." class="w-full pl-9 pr-4 py-2 border-transparent rounded-lg focus:outline-none text-white" style="background-color: #282828;">
+                <svg class="w-5 h-5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+        </div>
         <div class="px-4 pt-2 pb-2"><h2 class="text-xl font-bold themed-text-header">Chats</h2></div>
         <div id="user-list" class="flex-1 overflow-y-auto px-2"></div>
     </aside>
@@ -37,70 +65,20 @@
                 <button id="toggle-sidebar" class="p-2 rounded-md themed-hover lg:hidden"><svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
                 <div id="chat-header-pfp"></div>
                 <h3 id="chat-with-name" class="text-xl font-semibold themed-text-header">Select a chat</h3>
-                <button id="edit-theme-btn" class="p-2 rounded-md hover:bg-gray-700 hidden">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                </button>
+                <button id="edit-theme-btn" class="p-2 rounded-md hover:bg-gray-700 hidden"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
             </div>
         </header>
-
         <div id="main-content" class="flex-1 flex flex-col relative">
             <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
             <div id="message-input-area" class="themed-bg backdrop-blur-xl p-4 themed-shadow" style="background-color: #181818; box-shadow: 0 -1px 2px 0 rgba(0, 0, 0, 0.5);">
-                <div id="reply-preview-bar" class="hidden items-center justify-between p-2 mb-2 bg-gray-900/50 rounded-lg text-sm">
-                    <div class="border-l-2 border-purple-500 pl-2">
-                        <p class="font-bold text-purple-400">Replying to a message</p>
-                        <p id="reply-preview-text" class="text-gray-300 truncate"></p>
-                    </div>
-                    <button id="cancel-reply-btn" class="p-1 rounded-full hover:bg-gray-700">&times;</button>
-                </div>
-                <form id="message-form" class="flex items-center space-x-4">
-                    <input id="message-input" type="text" placeholder="Type a message..." autocomplete="off" class="themed-input flex-1 w-full px-5 py-3 border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500" style="background-color: #282828;">
-                    <button type="submit" class="p-3 bg-gradient-to-r from-fuchsia-500 to-purple-500 rounded-full text-white hover:scale-110 transform transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></button>
-                </form>
+                <div id="reply-preview-bar" class="hidden items-center justify-between p-2 mb-2 bg-gray-900/50 rounded-lg text-sm"><div class="border-l-2 border-purple-500 pl-2"><p class="font-bold text-purple-400">Replying to a message</p><p id="reply-preview-text" class="text-gray-300 truncate"></p></div><button id="cancel-reply-btn" class="p-1 rounded-full hover:bg-gray-700">&times;</button></div>
+                <form id="message-form" class="flex items-center space-x-4"><input id="message-input" type="text" placeholder="Type a message..." autocomplete="off" class="themed-input flex-1 w-full px-5 py-3 border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500" style="background-color: #282828;"><button type="submit" class="p-3 bg-gradient-to-r from-fuchsia-500 to-purple-500 rounded-full text-white hover:scale-110 transform transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></button></form>
             </div>
         </div>
     </main>
     
-    <div id="message-actions-popover" class="hidden absolute bg-gray-800 rounded-lg shadow-xl z-50 text-white text-sm">
-        <div id="react-palette" class="hidden p-1 gap-1">
-            <button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">👍</button>
-            <button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">👎</button>
-            <button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">❤️</button>
-            <button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">😂</button>
-            <button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">❗</button>
-            <button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">❓</button>
-        </div>
-        <div id="main-actions" class="flex flex-col py-1">
-            <button id="action-reply" class="text-left px-3 py-1.5 hover:bg-gray-700">Reply</button>
-            <button id="action-react" class="text-left px-3 py-1.5 hover:bg-gray-700">React</button>
-            <button id="action-delete" class="text-left px-3 py-1.5 text-red-400 hover:bg-gray-700">Delete</button>
-        </div>
-    </div>
-
-    <div id="theme-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
-        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-sm">
-            <h3 class="text-lg font-bold mb-4">Edit Chat Theme</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-400">Chat Background</label>
-                    <input type="file" id="background-upload-input" accept="image/*" class="mt-1 text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700"/>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-400">My Bubble Color</label>
-                    <input type="color" id="my-bubble-color-input" value="#7c3aed" class="w-full h-10 p-1 bg-gray-700 rounded-md cursor-pointer">
-                </div>
-                 <div>
-                    <label class="block text-sm font-medium text-gray-400">Friend's Bubble Color</label>
-                    <input type="color" id="friend-bubble-color-input" value="#4b5563" class="w-full h-10 p-1 bg-gray-700 rounded-md cursor-pointer">
-                </div>
-            </div>
-            <div class="mt-6 flex justify-end gap-3">
-                <button id="close-theme-modal-btn" class="px-4 py-2 bg-gray-600 rounded-md text-sm font-semibold">Cancel</button>
-                <button id="save-theme-btn" class="px-4 py-2 bg-purple-600 rounded-md text-sm font-semibold">Save</button>
-            </div>
-        </div>
-    </div>
-
+    <div id="message-actions-popover" class="hidden absolute bg-gray-800 rounded-lg shadow-xl z-50 text-white text-sm"><div id="react-palette" class="hidden p-1 gap-1"><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">👍</button><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">👎</button><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">❤️</button><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">😂</button><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">❗</button><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">❓</button></div><div id="main-actions" class="flex flex-col py-1"><button id="action-reply" class="text-left px-3 py-1.5 hover:bg-gray-700">Reply</button><button id="action-react" class="text-left px-3 py-1.5 hover:bg-gray-700">React</button><button id="action-delete" class="text-left px-3 py-1.5 text-red-400 hover:bg-gray-700">Delete</button></div></div>
+    <div id="theme-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden"><div class="bg-gray-800 rounded-lg p-6 w-full max-w-sm"><h3 class="text-lg font-bold mb-4">Edit Chat Theme</h3><div class="space-y-4"><div><label class="block text-sm font-medium text-gray-400">Chat Background</label><input type="file" id="background-upload-input" accept="image/*" class="mt-1 text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700"/></div><div><label class="block text-sm font-medium text-gray-400">My Bubble Color</label><input type="color" id="my-bubble-color-input" value="#7c3aed" class="w-full h-10 p-1 bg-gray-700 rounded-md cursor-pointer"></div><div><label class="block text-sm font-medium text-gray-400">Friend's Bubble Color</label><input type="color" id="friend-bubble-color-input" value="#374151" class="w-full h-10 p-1 bg-gray-700 rounded-md cursor-pointer"></div></div><div class="mt-6 flex justify-end gap-3"><button id="close-theme-modal-btn" class="px-4 py-2 bg-gray-600 rounded-md text-sm font-semibold">Cancel</button><button id="save-theme-btn" class="px-4 py-2 bg-purple-600 rounded-md text-sm font-semibold">Save</button></div></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -108,14 +86,13 @@
         import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, doc, getDoc, updateDoc, writeBatch, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-        // Firebase config...
         const firebaseConfig = { apiKey: "AIzaSyAFA-KDIFkqGmQ2fp9mz0tpwDOzcp_D93A", authDomain: "phonechatban.firebaseapp.com", projectId: "phonechatban", storageBucket: "phonechatban.firebasestorage.app", messagingSenderId: "987815128530", appId: "1:987815128530:web:4a938c18fd910b8d7bac0b", measurementId: "G-DVPM4KQ70Y" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
 
-        // All DOM elements...
+        // All DOM elements
         const userList = document.getElementById('user-list');
         const mainChatArea = document.getElementById('main-chat-area');
         const chatWithName = document.getElementById('chat-with-name');
@@ -134,8 +111,6 @@
         const profileDropdown = document.getElementById('profile-dropdown');
         const logoutDropdownBtn = document.getElementById('logout-btn-dropdown');
         const friendFilterInput = document.getElementById('friend-filter-input');
-        
-        // NEW DOM elements
         const editThemeBtn = document.getElementById('edit-theme-btn');
         const themeModal = document.getElementById('theme-modal');
         const closeThemeModalBtn = document.getElementById('close-theme-modal-btn');
@@ -154,141 +129,226 @@
         let currentChatPartner = null;
         let relationshipsUnsubscribe = null;
         let messagesUnsubscribe = null;
-        let currentTheme = { myBubbleColor: '#7c3aed', friendBubbleColor: '#4b5563', backgroundImage: 'none' };
+        let allUsersCache = null;
+        let currentTheme = { myBubbleColor: '#7c3aed', friendBubbleColor: '#374151', backgroundImage: 'none' };
         let replyState = { active: false, messageId: null, text: null };
 
         // --- Auth & Initial Load ---
-        onAuthStateChanged(auth, (user) => { /* ... unchanged ... */ });
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                const userDocRef = doc(db, "users", user.uid);
+                onSnapshot(userDocRef, (doc) => {
+                    if (doc.exists()) {
+                        currentUserData = doc.data();
+                        loadMyProfile(currentUserData);
+                    } else {
+                        window.location.href = './onboarding.html';
+                    }
+                });
+                if (relationshipsUnsubscribe) relationshipsUnsubscribe();
+                listenForRelationships();
+            } else {
+                window.location.href = './login.html';
+            }
+        });
         
         // --- Sidebar & Friend List Logic ---
-        function loadMyProfile(userData) { /* ... unchanged ... */ }
-        function listenForRelationships() { /* ... unchanged ... */ }
-        function updateUserListUI(friends, requests) { /* ... unchanged ... */ }
-        function renderUserInList(relationship) { /* ... unchanged ... */ }
-        async function sendFriendRequest(recipientId) { /* ... unchanged ... */ }
-        async function acceptFriendRequest(friendId) { /* ... unchanged ... */ }
-        // (All sidebar logic from previous steps is assumed to be here and correct)
+        function loadMyProfile(userData) {
+            if (userData.photoURL) {
+                myPfpSidebar.src = userData.photoURL;
+                myPfpSidebar.classList.remove('hidden');
+                myPfpInitialSidebar.classList.add('hidden');
+            } else {
+                myPfpInitialSidebar.textContent = (userData.displayName || '?').charAt(0).toUpperCase();
+                myPfpInitialSidebar.className = `w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${userData.pfpColor || 'bg-gray-700'}`;
+                myPfpSidebar.classList.add('hidden');
+                myPfpInitialSidebar.classList.remove('hidden');
+            }
+        }
 
+        function listenForRelationships() {
+            const relationshipsRef = collection(db, `users/${currentUser.uid}/relationships`);
+            relationshipsUnsubscribe = onSnapshot(query(relationshipsRef, orderBy("timestamp", "desc")), async (snapshot) => {
+                if (snapshot.empty) { userList.innerHTML = `<div class="text-center p-4 text-gray-400">No friends yet. Add one!</div>`; notificationDot.classList.add('hidden'); return; }
+                const fetchPromises = snapshot.docs.map(async (d) => {
+                    const rel = { id: d.id, ...d.data() };
+                    if (rel.userData) return rel; // Old format
+                    if (rel.uid) { // New format
+                        const userDoc = await getDoc(doc(db, "users", rel.uid));
+                        if (userDoc.exists()) return { ...rel, userData: userDoc.data() };
+                    }
+                    return null;
+                });
+                const populatedRelationships = (await Promise.all(fetchPromises)).filter(Boolean);
+                const friendRequests = populatedRelationships.filter(r => r.status !== 'friends');
+                const friends = populatedRelationships.filter(r => r.status === 'friends');
+                updateUserListUI(friends, friendRequests);
+                notificationDot.classList.toggle('hidden', !friendRequests.some(r => r.status === 'received'));
+            });
+        }
+
+        function updateUserListUI(friends, requests) {
+            userList.innerHTML = '';
+            if (friends.length === 0 && requests.length === 0) { userList.innerHTML = `<div class="text-center p-4 text-gray-400">No friends yet. Add one!</div>`; return; }
+            if (friends.length > 0) { friends.forEach(friend => renderUserInList(friend)); }
+            if (requests.length > 0) { if (friends.length > 0) { userList.innerHTML += `<div class="px-4 py-2 text-xs font-bold text-gray-400 uppercase">Requests</div>`; } requests.forEach(req => renderUserInList(req)); }
+        }
+
+        function renderUserInList(relationship) {
+            const { userData, status } = relationship;
+            const userElement = document.createElement('div');
+            userElement.setAttribute('data-search-name', `${userData.displayName.toLowerCase()} ${userData.username.toLowerCase()}`);
+            userElement.className = 'p-2 flex items-center justify-between cursor-pointer themed-hover rounded-lg transition';
+            let pfpHtml = userData.photoURL ? `<img src="${userData.photoURL}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white ${userData.pfpColor || 'bg-gray-700'}">${(userData.displayName || '?').charAt(0).toUpperCase()}</div>`;
+            let statusText = '', actionHtml = '';
+            switch (status) {
+                case 'sent': statusText = `<p class="status-text text-sm text-gray-400">Request Sent</p>`; userElement.classList.replace('cursor-pointer', 'cursor-default'); break;
+                case 'received': statusText = `<p class="status-text text-sm text-blue-400">Friend Request</p>`; actionHtml = `<button class="accept-req-btn-sidebar text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md" data-uid="${userData.uid}">Accept</button>`; break;
+                case 'friends': statusText = `<p class="status-text text-sm text-gray-500">You are now friends!</p>`; break;
+            }
+            userElement.innerHTML = `<div class="flex items-center gap-4 flex-grow">${pfpHtml}<div><p class="font-semibold text-white">${userData.displayName}</p>${statusText}</div></div><div class="action-container">${actionHtml}</div>`;
+            if (status === 'friends') { userElement.addEventListener('click', () => startChat(userData)); }
+            else if (status === 'received') {
+                const acceptBtn = userElement.querySelector('.accept-req-btn-sidebar');
+                acceptBtn.addEventListener('click', (e) => { e.stopPropagation(); acceptFriendRequest(userData.uid); });
+            }
+            userList.appendChild(userElement);
+        }
+
+        async function acceptFriendRequest(friendId) {
+            try {
+                const batch = writeBatch(db);
+                const timestamp = serverTimestamp();
+                batch.update(doc(db, `users/${currentUser.uid}/relationships/${friendId}`), { status: 'friends', timestamp });
+                batch.update(doc(db, `users/${friendId}/relationships/${currentUser.uid}`), { status: 'friends', timestamp });
+                await batch.commit();
+            } catch (error) { console.error("Error accepting friend request:", error); }
+        }
+
+        async function sendFriendRequest(recipientId) {
+             try {
+                const batch = writeBatch(db);
+                const timestamp = serverTimestamp();
+                batch.set(doc(db, `users/${currentUser.uid}/relationships/${recipientId}`), { status: 'sent', uid: recipientId, timestamp });
+                batch.set(doc(db, `users/${recipientId}/relationships/${currentUser.uid}`), { status: 'received', uid: currentUser.uid, timestamp });
+                await batch.commit();
+            } catch (error) { console.error("Error sending friend request:", error); }
+        }
+        
+        async function initializePopover() {
+            const searchInput = document.getElementById('user-search-input');
+            const popoverContent = document.getElementById('popover-content');
+            const render = (html) => popoverContent.innerHTML = html;
+            const requestsQuery = query(collection(db, `users/${currentUser.uid}/relationships`), where("status", "==", "received"));
+            const requestSnapshot = await getDocs(requestsQuery);
+            if (requestSnapshot.empty) { render('<p class="text-gray-400 text-sm p-4">Search for users to add them.</p>'); }
+            else {
+                const reqPromises = requestSnapshot.docs.map(d => getDoc(doc(db, "users", d.data().uid || d.id)));
+                const userDocs = await Promise.all(reqPromises);
+                let requestHtml = userDocs.map(userDoc => {
+                    if (!userDoc.exists()) return '';
+                    const userData = userDoc.data();
+                    const pfp = userData.photoURL ? `<img src="${userData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${userData.pfpColor || 'bg-gray-700'}">${userData.displayName.charAt(0).toUpperCase()}</div>`;
+                    return `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg" data-uid="${userData.uid}"><div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${userData.displayName}</p><p class="text-xs text-gray-400">@${userData.username}</p></div></div><button class="accept-req-btn text-sm bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md" data-uid="${userData.uid}">Accept</button></div>`;
+                }).join('');
+                render(`<div class="p-2 text-left">${requestHtml}</div>`);
+            }
+            popoverContent.addEventListener('click', async (e) => {
+                const target = e.target.closest('button');
+                if (!target) return;
+                const recipientId = target.dataset.uid;
+                target.disabled = true;
+                if (target.matches('.add-friend-btn')) { target.textContent = 'Sent'; await sendFriendRequest(recipientId); }
+                else if (target.matches('.accept-req-btn')) { target.textContent = 'Accepted'; await acceptFriendRequest(recipientId); target.closest('[data-uid]').remove(); }
+            });
+            searchInput.addEventListener('input', async () => {
+                const searchTerm = searchInput.value.trim().toLowerCase();
+                if (searchTerm.length < 2) { initializePopover(); return; }
+                try {
+                    if (!allUsersCache) { const usersSnapshot = await getDocs(collection(db, 'users')); allUsersCache = usersSnapshot.docs.map(doc => doc.data()); }
+                    const myRelationshipsSnap = await getDocs(collection(db, `users/${currentUser.uid}/relationships`));
+                    const excludedIds = new Set([currentUser.uid, ...myRelationshipsSnap.docs.map(d => d.id)]);
+                    const results = allUsersCache.filter(user => !excludedIds.has(user.uid) && (user.username.toLowerCase().includes(searchTerm) || user.displayName.toLowerCase().includes(searchTerm)));
+                    if (results.length === 0) { render('<p class="text-gray-400 text-sm p-4">No users found.</p>'); }
+                    else {
+                        let userItems = results.map(user => {
+                            let pfp = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor || 'bg-gray-700'}">${user.displayName.charAt(0).toUpperCase()}</div>`;
+                            return `<div class="p-2 flex items-center justify-between hover:bg-white/10 rounded-lg"><div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${user.displayName}</p><p class="text-xs text-gray-400">@${user.username}</p></div></div><button class="add-friend-btn text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-md" data-uid="${user.uid}">Add</button></div>`;
+                        }).join('');
+                        render(`<div class="p-2 text-left">${userItems}</div>`);
+                    }
+                } catch (error) { console.error("Search Error: ", error); render('<p class="text-red-400 text-sm p-4">Could not perform search.</p>'); }
+            });
+        }
+        
         // --- Chat Logic ---
         async function startChat(partnerData) {
             currentChatPartner = partnerData;
-            mainChatArea.classList.remove('hidden');
-            mainChatArea.classList.add('flex');
+            mainChatArea.classList.remove('hidden'); mainChatArea.classList.add('flex');
             chatWithName.textContent = partnerData.displayName;
             editThemeBtn.classList.remove('hidden');
-            chatMessages.innerHTML = ''; 
-
-            let pfpHtml = partnerData.photoURL ? `<img src="${partnerData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${partnerData.pfpColor}">${(partnerData.displayName || '?').charAt(0).toUpperCase()}</div>`;
+            chatMessages.innerHTML = '';
+            let pfpHtml = partnerData.photoURL ? `<img src="${partnerData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${partnerData.pfpColor || 'bg-gray-700'}">${(partnerData.displayName || '?').charAt(0).toUpperCase()}</div>`;
             chatHeaderPfp.innerHTML = pfpHtml;
-
             if (window.innerWidth < 1024) { sidebar.classList.add('-translate-x-full'); }
-            
-            // Load and apply theme
             const relationshipRef = doc(db, `users/${currentUser.uid}/relationships/${partnerData.uid}`);
             const relationshipSnap = await getDoc(relationshipRef);
-            if (relationshipSnap.exists() && relationshipSnap.data().theme) {
-                applyTheme(relationshipSnap.data().theme);
-            } else {
-                applyTheme({ myBubbleColor: '#7c3aed', friendBubbleColor: '#4b5563', backgroundImage: 'none' });
-            }
-
+            applyTheme(relationshipSnap.exists() && relationshipSnap.data().theme ? relationshipSnap.data().theme : { myBubbleColor: '#7c3aed', friendBubbleColor: '#374151', backgroundImage: 'none' });
             const channelId = [currentUser.uid, partnerData.uid].sort().join('_');
             const messagesRef = collection(db, "chats", channelId, "messages");
             if (messagesUnsubscribe) messagesUnsubscribe();
             messagesUnsubscribe = onSnapshot(query(messagesRef, orderBy("timestamp")), (snapshot) => {
                 snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        displayMessage({ id: change.doc.id, ...change.doc.data() });
-                    }
-                    if (change.type === "modified") {
-                        updateMessage({ id: change.doc.id, ...change.doc.data() });
-                    }
-                    if (change.type === "removed") {
-                        document.getElementById(change.doc.id)?.remove();
-                    }
+                    const messageData = { id: change.doc.id, ...change.doc.data() };
+                    if (change.type === "added") displayMessage(messageData);
+                    if (change.type === "modified") updateMessage(messageData);
+                    if (change.type === "removed") document.getElementById(change.doc.id)?.remove();
                 });
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             });
         }
-
         function displayMessage(message) {
             const isSentByMe = message.from === currentUser.uid;
             const messageElement = document.createElement('div');
             messageElement.id = message.id;
             messageElement.className = `flex items-end gap-2 group ${isSentByMe ? 'justify-end' : 'justify-start'}`;
-
             const bubble = document.createElement('div');
-            const bubbleColor = isSentByMe ? currentTheme.myBubbleColor : currentTheme.friendBubbleColor;
-            bubble.style.backgroundColor = bubbleColor;
+            bubble.style.backgroundColor = isSentByMe ? currentTheme.myBubbleColor : currentTheme.friendBubbleColor;
             bubble.className = `max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByMe ? 'rounded-br-lg' : 'rounded-bl-lg'} shadow-md text-white`;
-
-            let replyHtml = '';
-            if (message.replyToText) {
-                replyHtml = `<div class="mb-2 p-2 border-l-2 border-white/30 bg-white/10 rounded-md">
-                                <p class="text-xs text-gray-200 break-words">${message.replyToText}</p>
-                            </div>`;
-            }
-
+            let replyHtml = message.replyToText ? `<div class="mb-2 p-2 border-l-2 border-white/30 bg-white/10 rounded-md"><p class="text-xs text-gray-200 break-words">${message.replyToText}</p></div>` : '';
             bubble.innerHTML = `${replyHtml}<p class="text-sm break-words">${message.text}</p>`;
-
-            // Reactions container
             const reactionsContainer = document.createElement('div');
-            reactionsContainer.className = 'reactions-container flex gap-1 mt-1';
-            
+            reactionsContainer.className = 'reactions-container absolute -bottom-4 flex gap-1';
             messageElement.appendChild(bubble);
-            messageElement.appendChild(reactionsContainer); // Will be populated by updateMessage
-
-            // Double click listener for actions
+            bubble.insertAdjacentElement('afterend', reactionsContainer);
             messageElement.addEventListener('dblclick', (e) => showActionsPopover(e, message));
-
-            if (chatMessages.querySelector('.themed-text-secondary')) { chatMessages.innerHTML = ''; }
             chatMessages.appendChild(messageElement);
-            updateMessage(message); // Also used to initially render reactions
+            updateMessage(message);
         }
-
-        // Handles updates to messages (like new reactions)
         function updateMessage(message) {
             const messageElement = document.getElementById(message.id);
             if (!messageElement) return;
-
             const reactionsContainer = messageElement.querySelector('.reactions-container');
             if (!reactionsContainer) return;
-            
             reactionsContainer.innerHTML = '';
             if (message.reactions) {
-                const reactionCounts = {};
-                Object.values(message.reactions).forEach(emoji => {
-                    reactionCounts[emoji] = (reactionCounts[emoji] || 0) + 1;
-                });
-                
+                const reactionCounts = Object.values(message.reactions).reduce((acc, emoji) => ({...acc, [emoji]:(acc[emoji]||0)+1}), {});
                 for (const [emoji, count] of Object.entries(reactionCounts)) {
                     const reactionChip = document.createElement('div');
-                    reactionChip.className = 'text-xs px-2 py-0.5 bg-gray-700/80 rounded-full cursor-pointer';
+                    reactionChip.className = 'text-xs px-2 py-0.5 bg-gray-700/80 rounded-full cursor-pointer backdrop-blur-sm';
                     reactionChip.textContent = `${emoji} ${count}`;
                     reactionsContainer.appendChild(reactionChip);
                 }
             }
         }
-        
         messageForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const text = messageInput.value.trim();
             if (text && currentChatPartner) {
                 const channelId = [currentUser.uid, currentChatPartner.uid].sort().join('_');
-                
-                const messageData = {
-                    text,
-                    from: currentUser.uid,
-                    to: currentChatPartner.uid,
-                    timestamp: serverTimestamp(),
-                    reactions: {}
-                };
-
-                if (replyState.active) {
-                    messageData.replyToId = replyState.messageId;
-                    messageData.replyToText = replyState.text;
-                }
-
+                const messageData = { text, from: currentUser.uid, to: currentChatPartner.uid, timestamp: serverTimestamp(), reactions: {} };
+                if (replyState.active) { messageData.replyToId = replyState.messageId; messageData.replyToText = replyState.text; }
                 addDoc(collection(db, "chats", channelId, "messages"), messageData);
                 messageInput.value = '';
                 cancelReply();
@@ -301,67 +361,29 @@
             popover.classList.remove('hidden');
             document.getElementById('react-palette').classList.add('hidden');
             document.getElementById('main-actions').style.display = 'flex';
-            
-            // Store message data on the popover element
             popover.dataset.messageId = message.id;
             popover.dataset.messageText = message.text;
-
-            // Show/hide delete button
             document.getElementById('action-delete').style.display = message.from === currentUser.uid ? 'block' : 'none';
-            
             const rect = event.currentTarget.getBoundingClientRect();
-            popover.style.top = `${rect.top - popover.offsetHeight - 5}px`;
-            popover.style.left = `${event.clientX - popover.offsetWidth / 2}px`;
-
-            // Hide popover if clicking elsewhere
+            const popoverHeight = popover.offsetHeight;
+            popover.style.top = `${rect.top - popoverHeight - 10 + chatMessages.scrollTop}px`;
+            popover.style.left = `${rect.left + rect.width / 2 - popover.offsetWidth / 2}px`;
             setTimeout(() => document.addEventListener('click', hidePopover, { once: true }), 0);
         }
-
-        function hidePopover() {
-            popover.classList.add('hidden');
-        }
-
-        // Reply Logic
-        document.getElementById('action-reply').addEventListener('click', () => {
-            replyState = {
-                active: true,
-                messageId: popover.dataset.messageId,
-                text: popover.dataset.messageText
-            };
-            replyPreviewText.textContent = replyState.text;
-            replyPreviewBar.classList.remove('hidden');
-            messageInput.focus();
-            hidePopover();
-        });
-        
+        function hidePopover() { popover.classList.add('hidden'); }
+        document.getElementById('action-reply').addEventListener('click', () => { replyState = { active: true, messageId: popover.dataset.messageId, text: popover.dataset.messageText }; replyPreviewText.textContent = replyState.text; replyPreviewBar.classList.remove('hidden'); messageInput.focus(); hidePopover(); });
         cancelReplyBtn.addEventListener('click', cancelReply);
-        function cancelReply() {
-            replyState = { active: false, messageId: null, text: null };
-            replyPreviewBar.classList.add('hidden');
-        }
-
-        // React Logic
-        document.getElementById('action-react').addEventListener('click', () => {
-             document.getElementById('react-palette').classList.remove('hidden');
-             document.getElementById('main-actions').style.display = 'none';
-        });
-
+        function cancelReply() { replyState = { active: false, messageId: null, text: null }; replyPreviewBar.classList.add('hidden'); }
+        document.getElementById('action-react').addEventListener('click', () => { document.getElementById('react-palette').style.display = 'flex'; document.getElementById('main-actions').style.display = 'none'; });
         document.querySelectorAll('.react-emoji-btn').forEach(button => {
             button.addEventListener('click', async () => {
                 const messageId = popover.dataset.messageId;
                 const emoji = button.textContent;
                 const channelId = [currentUser.uid, currentChatPartner.uid].sort().join('_');
-                const messageRef = doc(db, "chats", channelId, "messages", messageId);
-                
-                // Use dot notation to update a specific field in a map
-                await updateDoc(messageRef, {
-                    [`reactions.${currentUser.uid}`]: emoji
-                });
+                await updateDoc(doc(db, "chats", channelId, "messages", messageId), { [`reactions.${currentUser.uid}`]: emoji });
                 hidePopover();
             });
         });
-
-        // Delete Logic
         document.getElementById('action-delete').addEventListener('click', async () => {
             if (confirm('Are you sure you want to delete this message?')) {
                 const messageId = popover.dataset.messageId;
@@ -372,67 +394,33 @@
         });
 
         // --- Theme Customization Logic ---
-        editThemeBtn.addEventListener('click', () => {
-            themeModal.classList.remove('hidden');
-            // Load current theme into modal inputs
-            myBubbleColorInput.value = currentTheme.myBubbleColor;
-            friendBubbleColorInput.value = currentTheme.friendBubbleColor;
-        });
-        
+        editThemeBtn.addEventListener('click', () => { themeModal.classList.remove('hidden'); myBubbleColorInput.value = currentTheme.myBubbleColor; friendBubbleColorInput.value = currentTheme.friendBubbleColor; });
         closeThemeModalBtn.addEventListener('click', () => themeModal.classList.add('hidden'));
-
         saveThemeBtn.addEventListener('click', async () => {
             saveThemeBtn.textContent = 'Saving...';
             const file = backgroundUploadInput.files[0];
             let newBackgroundUrl = currentTheme.backgroundImage;
-
             try {
                 if (file) {
                     const filePath = `chat_backgrounds/${currentUser.uid}_${currentChatPartner.uid}/${file.name}`;
                     const storageRef = ref(storage, filePath);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    newBackgroundUrl = await getDownloadURL(snapshot.ref);
+                    await uploadBytes(storageRef, file);
+                    newBackgroundUrl = await getDownloadURL(storageRef);
                 }
-                
-                const newTheme = {
-                    myBubbleColor: myBubbleColorInput.value,
-                    friendBubbleColor: friendBubbleColorInput.value,
-                    backgroundImage: newBackgroundUrl
-                };
-
-                const relationshipRef = doc(db, `users/${currentUser.uid}/relationships/${currentChatPartner.uid}`);
-                await updateDoc(relationshipRef, { theme: newTheme });
-
+                const newTheme = { myBubbleColor: myBubbleColorInput.value, friendBubbleColor: friendBubbleColorInput.value, backgroundImage: newBackgroundUrl };
+                await updateDoc(doc(db, `users/${currentUser.uid}/relationships/${currentChatPartner.uid}`), { theme: newTheme });
                 applyTheme(newTheme);
-                saveThemeBtn.textContent = 'Save';
-                themeModal.classList.add('hidden');
-
-            } catch (error) {
-                console.error("Error saving theme:", error);
-                alert("Could not save theme.");
-                saveThemeBtn.textContent = 'Save';
-            }
+            } catch (error) { console.error("Error saving theme:", error); alert("Could not save theme."); }
+            saveThemeBtn.textContent = 'Save';
+            themeModal.classList.add('hidden');
         });
-
-        function applyTheme(theme) {
-            currentTheme = theme;
-            chatMessages.style.backgroundImage = theme.backgroundImage === 'none' ? 'none' : `url(${theme.backgroundImage})`;
-        }
+        function applyTheme(theme) { currentTheme = theme; chatMessages.style.backgroundImage = theme.backgroundImage === 'none' ? 'none' : `url(${theme.backgroundImage})`; }
         
-        // --- Utility Listeners & Old Sidebar Logic ---
+        // --- Utility Listeners ---
         toggleSidebar.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
         logoutDropdownBtn.addEventListener('click', () => signOut(auth));
         document.addEventListener('click', (e) => { if (!addFriendsPopover.classList.contains('hidden') && !addFriendsPopoverBtn.contains(e.target) && !addFriendsPopover.contains(e.target)) { addFriendsPopover.classList.add('hidden'); } if (!profileDropdown.classList.contains('hidden') && !profileDropdownBtn.contains(e.target)) { profileDropdown.classList.add('hidden'); } });
-        friendFilterInput.addEventListener('input', (e) => { const searchTerm = e.target.value.toLowerCase(); const allUsersInList = userList.querySelectorAll('[data-search-name]'); allUsersInList.forEach(userElement => { const name = userElement.getAttribute('data-search-name'); if (name.includes(searchTerm)) { userElement.style.display = 'flex'; } else { userElement.style.display = 'none'; } }); });
-        
-        // This is the old sidebar logic, slightly adapted to fit. You can paste your existing functions here.
-        onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; const userDocRef = doc(db, "users", user.uid); onSnapshot(userDocRef, (doc) => { if (doc.exists()) { currentUserData = doc.data(); loadMyProfile(currentUserData); } else { window.location.href = './onboarding.html'; } }); if (relationshipsUnsubscribe) relationshipsUnsubscribe(); listenForRelationships(); } else { window.location.href = './login.html'; } });
-        function listenForRelationships() { /* ...paste your existing function here... */ }
-        function updateUserListUI(friends, requests) { /* ...paste your existing function here... */ }
-        function renderUserInList(relationship) { /* ...paste your existing function here... */ }
-        async function sendFriendRequest(recipientId) { /* ...paste your existing function here... */ }
-        async function acceptFriendRequest(friendId) { /* ...paste your existing function here... */ }
-        async function initializePopover() { /* ...paste your existing function here... */ }
+        friendFilterInput.addEventListener('input', (e) => { const searchTerm = e.target.value.toLowerCase(); userList.querySelectorAll('[data-search-name]').forEach(userElement => { userElement.style.display = userElement.getAttribute('data-search-name').includes(searchTerm) ? 'flex' : 'none'; }); });
 
     </script>
 </body>
