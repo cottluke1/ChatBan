@@ -3,73 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat App</title>
+    <title>Chat App - Setup Your Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000;
         }
-        #chat-messages::-webkit-scrollbar { width: 4px; }
-        #chat-messages::-webkit-scrollbar-track { background: transparent; }
-        #chat-messages::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 20px; }
-        #user-list::-webkit-scrollbar { width: 4px; }
-        #user-list::-webkit-scrollbar-track { background: transparent; }
-        #user-list::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 20px; }
-        .sidebar { transition: transform 0.3s ease-in-out; }
+        .background-wrapper {
+            background-color: #000000;
+            position: relative;
+            overflow: hidden;
+        }
+        .glow-effect {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(134, 25, 143, 0.3) 0%, rgba(76, 29, 149, 0) 60%);
+            pointer-events: none;
+        }
+        .btn-disabled {
+            background-color: #1f2937; /* bg-gray-800 */
+            color: #6b7280; /* text-gray-500 */
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        select {
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="gray" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5em;
+            padding-right: 2.5rem;
+        }
+        .step { display: none; }
+        .step.active { display: block; }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden text-gray-200">
+<body class="background-wrapper flex items-center justify-center h-screen text-gray-200">
+    <div class="glow-effect"></div>
 
-    <!-- Sidebar (List of Chats) -->
-    <aside id="sidebar" class="bg-gray-900/70 backdrop-blur-xl w-80 flex-shrink-0 border-r border-gray-700/50 flex flex-col sidebar absolute lg:relative -translate-x-full lg:translate-x-0 z-20 h-full">
-        <!-- Sidebar Header -->
-        <div class="h-20 flex-shrink-0 px-6 flex items-center justify-between border-b border-gray-700/50">
-            <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-purple-500">Chats</h2>
-            <button id="logout-button" class="text-sm text-gray-400 hover:text-white transition">Logout</button>
-        </div>
-        <!-- User List -->
-        <div id="user-list" class="flex-1 overflow-y-auto p-4 space-y-2">
-            <p class="text-center text-gray-500 mt-4">Loading users...</p>
-        </div>
-    </aside>
+    <div class="w-full max-w-md p-8 bg-black/60 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl z-10">
 
-    <!-- Main Chat Area -->
-    <main class="flex-1 flex flex-col bg-black/80">
-        <!-- Header -->
-        <header class="bg-gray-900/70 backdrop-blur-xl h-20 flex-shrink-0 px-6 flex items-center border-b border-gray-700/50 z-10">
-             <button id="toggle-sidebar" class="mr-4 p-2 rounded-md hover:bg-gray-800 lg:hidden">
-                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-            </button>
-            <h3 id="chat-with-name" class="text-xl font-semibold text-gray-200">Select a chat to start</h3>
-        </header>
-
-        <!-- Messages -->
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
-            <div class="flex justify-center items-center h-full">
-                <p class="text-gray-500">Messages will appear here.</p>
+        <!-- Step 1: Username & Display Name -->
+        <div id="step-1" class="step active">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">Choose Your Names</h1>
+                <p class="mt-2 text-sm text-gray-400">Your username is unique. Your display name is what others will see.</p>
+            </div>
+            <div class="space-y-6 pt-6">
+                <div>
+                    <label for="username" class="text-sm font-medium text-gray-400">Username</label>
+                    <input id="username" type="text" required autocapitalize="none" class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    <p id="username-status" class="text-xs mt-1 h-4"></p>
+                </div>
+                <div>
+                    <label for="displayName" class="text-sm font-medium text-gray-400">Display Name</label>
+                    <input id="displayName" type="text" required class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+                <button id="continue-1" disabled class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all btn-disabled">Continue</button>
             </div>
         </div>
 
-        <!-- Message Input -->
-        <div id="message-input-container" class="bg-gray-900/70 backdrop-blur-xl p-4 border-t border-gray-700/50 hidden">
-            <form id="message-form" class="flex items-center space-x-4">
-                <input id="message-input" type="text" placeholder="Type a message..." autocomplete="off"
-                    class="flex-1 w-full px-5 py-3 text-gray-200 bg-gray-800/70 border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
-                <button type="submit" class="p-3 bg-gradient-to-r from-fuchsia-500 to-purple-500 rounded-full text-white hover:scale-110 transform transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                </button>
-            </form>
+        <!-- Step 2: School, Grad Year, Bio -->
+        <div id="step-2" class="step">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">Tell Us More</h1>
+                <p class="mt-2 text-sm text-gray-400">This helps you connect with classmates.</p>
+            </div>
+            <div class="space-y-6 pt-6">
+                <div>
+                    <label for="school" class="text-sm font-medium text-gray-400">School Name</label>
+                    <input id="school" type="text" required class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+                <div>
+                    <label for="gradYear" class="text-sm font-medium text-gray-400">Graduation Year</label>
+                    <select id="gradYear" required class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option value="" disabled selected>Select Year</option>
+                    </select>
+                </div>
+                 <div>
+                    <label for="bio" class="text-sm font-medium text-gray-400">Bio</label>
+                    <textarea id="bio" maxlength="100" class="w-full px-4 py-2 mt-1 text-gray-200 bg-gray-900/70 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500" rows="2"></textarea>
+                    <p id="bio-char-count" class="text-xs text-right text-gray-500 mt-1">0 / 100</p>
+                </div>
+                <div class="flex gap-4">
+                    <button id="back-2" class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg bg-gray-700 hover:bg-gray-600 transition-all">Back</button>
+                    <button id="continue-2" disabled class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all btn-disabled">Continue</button>
+                </div>
+            </div>
         </div>
-    </main>
-    
+
+        <!-- Step 3: Confirmation -->
+        <div id="step-3" class="step">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-500">Looks good?</h1>
+                <p class="mt-2 text-sm text-gray-400">Confirm your details below.</p>
+            </div>
+            <div class="space-y-6 pt-6">
+                <div class="flex items-center gap-6">
+                    <div class="w-24 h-24 flex-shrink-0">
+                        <label for="pfp-upload" class="cursor-pointer group">
+                            <img id="confirm-pfp-preview" src="" class="w-full h-full rounded-full object-cover border-2 border-fuchsia-500/50 group-hover:border-fuchsia-500 transition hidden">
+                            <div id="confirm-pfp-initial" class="w-full h-full rounded-full flex items-center justify-center text-4xl font-bold text-white group-hover:opacity-80 transition"></div>
+                        </label>
+                        <input type="file" id="pfp-upload" class="hidden" accept="image/png, image/jpeg">
+                    </div>
+                    <div class="w-full space-y-2 text-sm">
+                        <p><strong class="text-gray-400">Username:</strong> <span id="confirm-username"></span></p>
+                        <p><strong class="text-gray-400">Display Name:</strong> <span id="confirm-displayName"></span></p>
+                        <p><strong class="text-gray-400">School:</strong> <span id="confirm-school"></span></p>
+                        <p><strong class="text-gray-400">Grad Year:</strong> <span id="confirm-gradYear"></span></p>
+                    </div>
+                </div>
+                 <div id="bio-confirmation-section" class="hidden">
+                    <p class="text-gray-400 text-sm">Bio:</p>
+                    <p id="confirm-bio" class="text-sm mt-1 p-2 bg-gray-900/50 rounded-md min-h-[40px]"></p>
+                </div>
+                <div class="flex gap-4 pt-2">
+                    <button id="back-3" class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg bg-gray-700 hover:bg-gray-600 transition-all">Back</button>
+                    <button id="continue-3" class="w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all text-white bg-gradient-to-r from-teal-400 to-sky-500">Finish Setup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, doc, getDocs, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-        // --- Firebase Initialization ---
         const firebaseConfig = {
             apiKey: "AIzaSyAFA-KDIFkqGmQ2fp9mz0tpwDOzcp_D93A",
             authDomain: "phonechatban.firebaseapp.com",
@@ -79,146 +146,233 @@
             appId: "1:987815128530:web:4a938c18fd910b8d7bac0b",
             measurementId: "G-DVPM4KQ70Y"
         };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // --- State Management ---
+        let currentUser = null;
+        let onboardingData = { profilePictureFile: null, pfpColor: '' };
+        let isUsernameAvailable = false;
+        let usernameCheckTimeout;
+
+        const pfpColors = [
+            'bg-gradient-to-br from-red-500 to-orange-500',
+            'bg-gradient-to-br from-green-500 to-teal-500',
+            'bg-gradient-to-br from-blue-500 to-indigo-500',
+            'bg-gradient-to-br from-pink-500 to-rose-500',
+            'bg-gradient-to-br from-yellow-500 to-amber-500',
+        ];
 
         // --- DOM Elements ---
-        const userList = document.getElementById('user-list');
-        const chatMessages = document.getElementById('chat-messages');
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
-        const messageInputContainer = document.getElementById('message-input-container');
-        const chatWithName = document.getElementById('chat-with-name');
-        const logoutButton = document.getElementById('logout-button');
-        const sidebar = document.getElementById('sidebar');
-        const toggleSidebar = document.getElementById('toggle-sidebar');
+        const steps = document.querySelectorAll('.step');
+        const usernameInput = document.getElementById('username');
+        const usernameStatus = document.getElementById('username-status');
+        const displayNameInput = document.getElementById('displayName');
+        const schoolInput = document.getElementById('school');
+        const gradYearSelect = document.getElementById('gradYear');
+        const bioInput = document.getElementById('bio');
+        const bioCharCount = document.getElementById('bio-char-count');
+        const pfpUploadInput = document.getElementById('pfp-upload');
+        const continue1Btn = document.getElementById('continue-1');
+        const continue2Btn = document.getElementById('continue-2');
+        const continue3Btn = document.getElementById('continue-3');
+        const back2Btn = document.getElementById('back-2');
+        const back3Btn = document.getElementById('back-3');
 
-        // --- State Variables ---
-        let currentUser = null;
-        let currentChatPartnerId = null;
-        let unsubscribeMessages = null;
+        // --- Navigation ---
+        function goToStep(stepNumber) {
+            steps.forEach(step => step.classList.remove('active'));
+            document.getElementById(`step-${stepNumber}`).classList.add('active');
+        }
 
-        // --- Auth Management ---
+        continue1Btn.addEventListener('click', () => {
+            onboardingData.username = usernameInput.value.toLowerCase();
+            onboardingData.displayName = displayNameInput.value;
+            goToStep(2);
+        });
+        back2Btn.addEventListener('click', () => goToStep(1));
+        continue2Btn.addEventListener('click', () => {
+            onboardingData.schoolName = schoolInput.value;
+            onboardingData.graduationYear = gradYearSelect.value;
+            onboardingData.bio = bioInput.value;
+            populateConfirmation();
+            goToStep(3);
+        });
+        back3Btn.addEventListener('click', () => goToStep(2));
+        
+        // --- Populate Confirmation ---
+        function populateConfirmation() {
+            document.getElementById('confirm-username').textContent = onboardingData.username;
+            document.getElementById('confirm-displayName').textContent = onboardingData.displayName;
+            document.getElementById('confirm-school').textContent = onboardingData.schoolName;
+            document.getElementById('confirm-gradYear').textContent = onboardingData.graduationYear;
+            
+            const bioConfirmationSection = document.getElementById('bio-confirmation-section');
+            if (onboardingData.bio && onboardingData.bio.trim() !== '') {
+                document.getElementById('confirm-bio').textContent = onboardingData.bio;
+                bioConfirmationSection.classList.remove('hidden');
+            } else {
+                 bioConfirmationSection.classList.add('hidden');
+            }
+            
+            const pfpInitial = document.getElementById('confirm-pfp-initial');
+            pfpInitial.textContent = (onboardingData.displayName || '?').charAt(0).toUpperCase();
+            if (!onboardingData.pfpColor) {
+                 onboardingData.pfpColor = pfpColors[Math.floor(Math.random() * pfpColors.length)];
+            }
+            pfpInitial.className = `w-full h-full rounded-full flex items-center justify-center text-4xl font-bold text-white group-hover:opacity-80 transition ${onboardingData.pfpColor}`;
+
+
+            if (!onboardingData.profilePictureFile) {
+                pfpInitial.style.display = 'flex';
+                document.getElementById('confirm-pfp-preview').classList.add('hidden');
+            }
+        }
+
+        // --- Populate Grad Year ---
+        for (let year = 2026; year <= 2038; year++) {
+            gradYearSelect.appendChild(new Option(year, year));
+        }
+
+        // --- Validation & Button Logic ---
+        const btnActiveClasses = "text-white bg-gradient-to-r from-teal-400 to-sky-500";
+        const baseButtonClasses = "w-full px-4 py-3 text-sm font-bold rounded-md shadow-lg transition-all";
+
+        async function checkUsername() {
+            const username = usernameInput.value.toLowerCase().trim();
+            if (username.length < 3 || !/^[a-z0-9_.]+$/.test(username)) {
+                usernameStatus.textContent = '3+ chars, lowercase, numbers, _, .';
+                usernameStatus.className = 'text-xs mt-1 h-4 text-yellow-500';
+                isUsernameAvailable = false;
+                validateStep1();
+                return;
+            }
+            usernameStatus.textContent = 'Checking...';
+            usernameStatus.className = 'text-xs mt-1 h-4 text-gray-500';
+            
+            const docRef = doc(db, "usernames", username);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                usernameStatus.textContent = 'Username is taken.';
+                usernameStatus.className = 'text-xs mt-1 h-4 text-red-500';
+                isUsernameAvailable = false;
+            } else {
+                usernameStatus.textContent = 'Username is available!';
+                usernameStatus.className = 'text-xs mt-1 h-4 text-green-500';
+                isUsernameAvailable = true;
+            }
+            validateStep1();
+        }
+
+        function validateStep1() {
+            const isDisplayNameValid = displayNameInput.value.trim().length > 0;
+            if (isUsernameAvailable && isDisplayNameValid) {
+                continue1Btn.disabled = false;
+                continue1Btn.className = `${baseButtonClasses} ${btnActiveClasses}`;
+            } else {
+                continue1Btn.disabled = true;
+                continue1Btn.className = `${baseButtonClasses} btn-disabled`;
+            }
+        }
+
+        function validateStep2() {
+            const isSchoolValid = schoolInput.value.trim() !== '';
+            const isGradYearValid = gradYearSelect.value !== '';
+            if (isSchoolValid && isGradYearValid) {
+                continue2Btn.disabled = false;
+                continue2Btn.className = `${baseButtonClasses} ${btnActiveClasses}`;
+            } else {
+                continue2Btn.disabled = true;
+                continue2Btn.className = `${baseButtonClasses} btn-disabled`;
+            }
+        }
+
+        usernameInput.addEventListener('input', () => {
+            clearTimeout(usernameCheckTimeout);
+            usernameCheckTimeout = setTimeout(checkUsername, 500);
+        });
+        displayNameInput.addEventListener('input', validateStep1);
+        schoolInput.addEventListener('input', validateStep2);
+        gradYearSelect.addEventListener('change', validateStep2);
+        bioInput.addEventListener('input', () => {
+            bioCharCount.textContent = `${bioInput.value.length} / 100`;
+        });
+
+        // --- PFP Upload ---
+        pfpUploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                onboardingData.profilePictureFile = file;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const preview = document.getElementById('confirm-pfp-preview');
+                    preview.src = event.target.result;
+                    preview.classList.remove('hidden');
+                    document.getElementById('confirm-pfp-initial').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- Auth & Final Submission ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                loadUsers();
             } else {
                 window.location.href = './login.html';
             }
         });
-        
-        logoutButton.addEventListener('click', () => {
-            signOut(auth).catch(error => console.error("Logout failed:", error));
-        });
 
-        // --- UI Functions ---
-        toggleSidebar.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-        });
-
-        // --- Core Functions ---
-        async function loadUsers() {
-            const usersRef = collection(db, "users");
-            const q = query(usersRef, where("uid", "!=", currentUser.uid));
+        continue3Btn.addEventListener('click', async () => {
+            if (!currentUser) return alert("Error: Not logged in.");
+            continue3Btn.disabled = true;
+            continue3Btn.textContent = 'Saving...';
             
-            onSnapshot(q, (querySnapshot) => {
-                userList.innerHTML = ''; // Clear the list
-                querySnapshot.forEach((doc) => {
-                    const user = doc.data();
-                    const userElement = document.createElement('div');
-                    userElement.className = 'p-3 flex items-center space-x-4 cursor-pointer hover:bg-gray-800/50 rounded-lg transition';
-                    userElement.dataset.uid = user.uid;
-                    userElement.dataset.name = user.displayName;
-                    userElement.innerHTML = `
-                        <div class="w-12 h-12 bg-gradient-to-r from-teal-400 to-sky-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                            ${user.displayName.charAt(0)}
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-200">${user.displayName}</p>
-                            <p class="text-sm text-gray-400">${user.schoolName}</p>
-                        </div>
-                    `;
-                    userElement.addEventListener('click', () => startChat(user.uid, user.displayName));
-                    userList.appendChild(userElement);
-                });
-            });
-        }
+            try {
+                let photoURL = null;
+                if (onboardingData.profilePictureFile) {
+                    const filePath = `profilePictures/${currentUser.uid}/${onboardingData.profilePictureFile.name}`;
+                    const storageRef = ref(storage, filePath);
+                    const snapshot = await uploadBytes(storageRef, onboardingData.profilePictureFile);
+                    photoURL = await getDownloadURL(snapshot.ref);
+                }
 
-        function startChat(partnerId, partnerName) {
-            currentChatPartnerId = partnerId;
-            chatWithName.textContent = `${partnerName}`;
-            messageInputContainer.classList.remove('hidden');
-            chatMessages.innerHTML = ''; 
-
-            if (window.innerWidth < 1024) { // lg breakpoint
-                sidebar.classList.add('-translate-x-full');
-            }
-
-            if (unsubscribeMessages) unsubscribeMessages();
-            
-            const channelId = [currentUser.uid, partnerId].sort().join('_');
-            const messagesRef = collection(db, "chats", channelId, "messages");
-            const q = query(messagesRef, orderBy("timestamp"));
-
-            unsubscribeMessages = onSnapshot(q, (snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const messageData = change.doc.data();
-                        displayMessage(messageData, change.doc.id);
-
-                        if (messageData.to === currentUser.uid && !messageData.isRead) {
-                            const msgRef = doc(db, "chats", channelId, "messages", change.doc.id);
-                            const deleteTime = Timestamp.fromMillis(Date.now() + 10 * 60 * 1000); // 10 minutes
-                            updateDoc(msgRef, {
-                                isRead: true,
-                                deleteAt: deleteTime
-                            }).catch(err => console.error("Error marking message as read:", err));
-                        }
-                    }
-                });
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            });
-        }
-
-        function displayMessage(message, messageId) {
-            const isSentByMe = message.from === currentUser.uid;
-            const messageElement = document.createElement('div');
-            messageElement.id = `msg-${messageId}`;
-            messageElement.className = `flex items-end gap-2 ${isSentByMe ? 'justify-end' : 'justify-start'}`;
-            
-            const bubbleClass = isSentByMe 
-                ? 'bg-gradient-to-br from-fuchsia-600 to-purple-600 text-white' 
-                : 'bg-gray-800 text-gray-200';
-
-            messageElement.innerHTML = `
-                <div class="max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByMe ? 'rounded-br-lg' : 'rounded-bl-lg'} shadow-md">
-                    <p class="text-sm">${message.text}</p>
-                </div>
-            `;
-            chatMessages.appendChild(messageElement);
-        }
-
-        messageForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = messageInput.value.trim();
-            if (text && currentChatPartnerId) {
-                const channelId = [currentUser.uid, currentChatPartnerId].sort().join('_');
-                const messagesRef = collection(db, "chats", channelId, "messages");
+                const batch = writeBatch(db);
                 
-                addDoc(messagesRef, {
-                    text: text,
-                    from: currentUser.uid,
-                    to: currentChatPartnerId,
-                    timestamp: serverTimestamp(),
-                    isRead: false,
-                    deleteAt: null
-                }).catch(err => console.error("Error sending message:", err));
+                const userDocRef = doc(db, "users", currentUser.uid);
+                batch.set(userDocRef, {
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    username: onboardingData.username,
+                    displayName: onboardingData.displayName,
+                    schoolName: onboardingData.schoolName,
+                    graduationYear: onboardingData.graduationYear,
+                    bio: onboardingData.bio || '',
+                    photoURL: photoURL,
+                    pfpColor: onboardingData.pfpColor,
+                    theme: 'dark', // Default theme
+                    createdAt: new Date()
+                });
 
-                messageInput.value = '';
+                const usernameDocRef = doc(db, "usernames", onboardingData.username);
+                batch.set(usernameDocRef, { uid: currentUser.uid });
+
+                await batch.commit();
+                
+                window.location.href = './chat.html';
+
+            } catch (error) {
+                console.error("Error saving profile: ", error);
+                alert("Could not save profile. The username might have been taken. Please go back and try another.");
+                continue3Btn.disabled = false;
+                continue3Btn.textContent = 'Finish Setup';
             }
         });
+
     </script>
 </body>
 </html>
