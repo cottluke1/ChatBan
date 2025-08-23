@@ -103,7 +103,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, doc, getDoc, updateDoc, Timestamp, writeBatch, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, doc, getDoc, updateDoc, Timestamp, writeBatch, deleteDoc, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAFA-KDIFkqGmQ2fp9mz0tpwDOzcp_D93A",
@@ -146,6 +146,7 @@
         let unsubscribeRequests = null;
         let allUsersCache = null;
         let popoverListenersAttached = false;
+        const chatUnsubscribes = new Map();
 
         // --- Auth & Initial Load ---
         onAuthStateChanged(auth, async (user) => {
@@ -156,7 +157,7 @@
                     currentUserData = userDoc.data();
                     applyTheme(currentUserData.theme);
                     loadMyProfile(currentUserData);
-                    listenForFriends();
+                    listenForFriendsAndRequests();
                     listenForFriendRequests();
                 } else {
                     window.location.href = './onboarding.html';
@@ -192,31 +193,83 @@
             profileDropdown.classList.toggle('hidden');
         });
 
-        // --- Friend & User Management ---
-        function listenForFriends() {
+        // --- Friend & User Management (REVISED)---
+        function listenForFriendsAndRequests() {
             const friendsRef = collection(db, `users/${currentUser.uid}/friends`);
-            onSnapshot(query(friendsRef, orderBy("displayName")), (snapshot) => {
+            const sentRequestsRef = collection(db, `users/${currentUser.uid}/sentFriendRequests`);
+
+            const render = (friends, sentRequests) => {
+                const combined = new Map();
+                friends.forEach(f => combined.set(f.uid, { ...f, status: 'friend' }));
+                sentRequests.forEach(r => {
+                    if (!combined.has(r.uid)) combined.set(r.uid, { ...r, status: 'pending' });
+                });
+                
                 userList.innerHTML = '';
-                if (snapshot.empty) {
-                    userList.innerHTML = `<div class="text-center p-4 themed-text-secondary">No friends yet. Click the icon above to find people.</div>`;
+                if (combined.size === 0) {
+                    userList.innerHTML = `<div class="text-center p-4 themed-text-secondary">No friends yet. Find people to chat with!</div>`;
                     return;
                 }
-                snapshot.forEach(doc => renderUserInList(doc.data()));
+                
+                combined.forEach(user => renderUserInList(user));
+            };
+
+            onSnapshot(query(friendsRef, orderBy("displayName")), (friendsSnap) => {
+                const friends = friendsSnap.docs.map(doc => doc.data());
+                onSnapshot(sentRequestsRef, (sentRequestsSnap) => {
+                    const sentRequests = sentRequestsSnap.docs.map(doc => doc.data());
+                    render(friends, sentRequests);
+                });
             });
         }
-
+        
         function renderUserInList(userData) {
             const userElement = document.createElement('div');
+            userElement.id = `user-list-item-${userData.uid}`;
             userElement.className = 'p-2 flex items-center justify-between cursor-pointer themed-hover rounded-lg transition';
             
             let pfpHtml = userData.photoURL ? `<img src="${userData.photoURL}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white ${userData.pfpColor}">${(userData.displayName || '?').charAt(0).toUpperCase()}</div>`;
+            
+            const statusText = userData.status === 'pending' ? 'Request Sent' : 'New Chat';
 
-            userElement.innerHTML = `<div class="flex items-center gap-4">${pfpHtml}<div><p class="font-semibold themed-text-header">${userData.displayName}</p><p class="text-sm themed-text-secondary">New Chat</p></div></div>`;
-            userElement.addEventListener('click', () => startChat(userData));
+            userElement.innerHTML = `
+                <div class="flex items-center gap-4">
+                    ${pfpHtml}
+                    <div>
+                        <p class="font-semibold themed-text-header">${userData.displayName}</p>
+                        <p class="text-sm themed-text-secondary">${statusText}</p>
+                    </div>
+                </div>
+                <div class="unread-badge bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center hidden"></div>`;
+
+            if (userData.status !== 'pending') {
+                userElement.addEventListener('click', () => startChat(userData));
+            }
+
             userList.appendChild(userElement);
+
+            // Listen for unread messages
+            if (userData.status === 'friend') {
+                const channelId = [currentUser.uid, userData.uid].sort().join('_');
+                const messagesRef = collection(db, "chats", channelId, "messages");
+                const lastReadTimestamp = currentUserData.lastRead?.[channelId] || new Timestamp(0, 0);
+                
+                const q = query(messagesRef, where('from', '==', userData.uid), where('timestamp', '>', lastReadTimestamp));
+                
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    const badge = userElement.querySelector('.unread-badge');
+                    if (snapshot.size > 0) {
+                        badge.textContent = snapshot.size > 9 ? '9+' : snapshot.size;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                });
+                chatUnsubscribes.set(userData.uid, unsubscribe);
+            }
         }
 
-        // --- Add Friends Popover (REVISED & ROBUST) ---
+        // --- Add Friends Popover ---
         let requestsHtml = '';
         let searchHtml = '';
 
@@ -264,7 +317,7 @@
 
                 // Attach listener for search input
                 searchInput.addEventListener('input', async () => {
-                    try {
+                     try {
                         const searchTerm = searchInput.value.trim().toLowerCase();
                         if (searchTerm.length < 1) {
                             searchHtml = '';
@@ -319,7 +372,11 @@
 
                     if (target.matches('.add-friend-btn')) {
                         target.disabled = true;
-                        await sendFriendRequest(target.dataset.uid);
+                        const recipientId = target.dataset.uid;
+                        const userDoc = await getDoc(doc(db, 'users', recipientId));
+                        if(userDoc.exists()) {
+                           await sendFriendRequest(recipientId, userDoc.data());
+                        }
                         target.textContent = 'Sent';
                         target.classList.replace('bg-gray-600', 'bg-gray-800');
                     } else if (target.matches('.accept-req-btn')) {
@@ -348,11 +405,11 @@
             }
         });
         
-        // --- Friend Request Logic ---
-        async function sendFriendRequest(recipientId) {
+        // --- Friend Request Logic (REVISED) ---
+        async function sendFriendRequest(recipientId, recipientData) {
             const batch = writeBatch(db);
             batch.set(doc(db, `users/${recipientId}/friendRequests/${currentUser.uid}`), { uid: currentUser.uid, displayName: currentUserData.displayName, photoURL: currentUserData.photoURL || null, pfpColor: currentUserData.pfpColor, timestamp: serverTimestamp() });
-            batch.set(doc(db, `users/${currentUser.uid}/sentFriendRequests/${recipientId}`), { uid: recipientId });
+            batch.set(doc(db, `users/${currentUser.uid}/sentFriendRequests/${recipientId}`), { ...recipientData, timestamp: serverTimestamp() });
             await batch.commit();
         }
 
@@ -365,7 +422,6 @@
         // --- Theme Modal ---
         themeModalBtn.addEventListener('click', () => {
             const themeModal = document.getElementById('theme-modal');
-            const backdrop = themeModal.querySelector('#modal-backdrop');
             themeModal.classList.remove('hidden');
             themeModal.innerHTML = `<div id="modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"></div>
             <div class="themed-bg-darker relative border-transparent shadow-2xl rounded-2xl p-6 max-w-xs w-full z-50" style="background-color: #181818;">
@@ -385,7 +441,7 @@
         });
 
         // --- Chat Logic ---
-        function startChat(partnerData) {
+        async function startChat(partnerData) {
             currentChatPartner = partnerData;
             mainChatArea.classList.remove('hidden');
             mainChatArea.classList.add('flex');
@@ -401,6 +457,13 @@
             if (unsubscribeMessages) unsubscribeMessages();
             
             const channelId = [currentUser.uid, partnerData.uid].sort().join('_');
+            
+            // Mark messages as read
+            const userDocRef = doc(db, "users", currentUser.uid);
+            await updateDoc(userDocRef, {
+                [`lastRead.${channelId}`]: serverTimestamp()
+            });
+
             const messagesRef = collection(db, "chats", channelId, "messages");
             const q = query(messagesRef, orderBy("timestamp"));
 
