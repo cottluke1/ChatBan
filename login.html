@@ -194,44 +194,70 @@
         });
 
         // --- Functions ---
-        function showMessage(message, isError = true) {
+        function showMessage(error) {
+            let message = "An unexpected error occurred. Please try again.";
+            switch (error.code) {
+                case "auth/email-already-in-use":
+                    message = "An account already exists with this email address.";
+                    break;
+                case "auth/wrong-password":
+                    message = "Incorrect password. Please try again.";
+                    break;
+                case "auth/user-not-found":
+                    message = "No account found with this email address.";
+                    break;
+                case "auth/invalid-email":
+                    message = "Please enter a valid email address.";
+                    break;
+                case "auth/weak-password":
+                    message = "Password should be at least 6 characters.";
+                    break;
+            }
             messageText.textContent = message;
             messageBox.classList.remove('hidden');
-            if (isError) {
-                messageBox.className = 'p-4 text-sm text-center rounded-lg bg-red-900/50 text-red-300 border border-red-500/50';
-            } else {
-                messageBox.className = 'p-4 text-sm text-center rounded-lg bg-green-900/50 text-green-300 border border-green-500/50';
-            }
+            messageBox.className = 'p-4 text-sm text-center rounded-lg bg-red-900/50 text-red-300 border border-red-500/50';
         }
 
         // --- Event Listeners for Forms ---
         signupForm.addEventListener('submit', (e) => {
             e.preventDefault();
             if (signupButton.disabled) return;
+            
+            signupButton.disabled = true;
+            signupButton.textContent = "Creating...";
+
             const email = signupEmail.value;
             const password = signupPassword.value;
 
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Auth observer will handle redirect.
+                    // Success. The onAuthStateChanged observer will handle the redirect.
                 })
                 .catch((error) => {
-                    showMessage(error.message);
+                    showMessage(error);
+                    signupButton.disabled = false;
+                    signupButton.textContent = "Create Account";
                 });
         });
 
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             if (loginButton.disabled) return;
+
+            loginButton.disabled = true;
+            loginButton.textContent = "Signing In...";
+
             const email = loginEmail.value;
             const password = loginPassword.value;
 
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Auth observer will handle redirect.
+                    // Success. The onAuthStateChanged observer will handle the redirect.
                 })
                 .catch((error) => {
-                    showMessage(error.message);
+                    showMessage(error);
+                    loginButton.disabled = false;
+                    loginButton.textContent = "Sign In";
                 });
         });
 
@@ -247,7 +273,7 @@
                     }
                 }).catch(error => {
                     console.error("Error checking user profile:", error);
-                    showMessage("Could not verify your profile. Please try again.");
+                    showMessage({ code: 'custom', message: "Could not verify your profile. Please try again."});
                 });
             }
         });
