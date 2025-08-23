@@ -32,27 +32,30 @@
     <aside id="sidebar" class="themed-bg-darker backdrop-blur-xl w-full md:w-96 flex-shrink-0 flex flex-col sidebar absolute lg:relative -translate-x-full lg:translate-x-0 z-30 h-full" style="background-color: #181818;">
         <div class="h-20 flex-shrink-0 px-4 flex items-center justify-between themed-shadow" style="box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5);">
             <div class="flex items-center gap-3">
-                <a href="./profile.html" id="profile-link-sidebar">
-                    <img id="my-pfp-sidebar" src="" class="w-10 h-10 rounded-full object-cover hidden">
-                    <div id="my-pfp-initial-sidebar" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"></div>
-                </a>
-                <div class="relative flex-1">
-                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <input type="text" placeholder="Search" class="w-full bg-gray-700/50 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <div class="relative">
+                    <button id="profile-dropdown-btn">
+                        <img id="my-pfp-sidebar" src="" class="w-10 h-10 rounded-full object-cover hidden">
+                        <div id="my-pfp-initial-sidebar" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"></div>
+                    </button>
+                    <div id="profile-dropdown" class="absolute top-12 left-0 w-48 bg-gray-800 rounded-lg shadow-lg py-1 hidden z-50">
+                        <button id="theme-modal-btn" class="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700">Theme</button>
+                        <a href="./profile.html" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700">Profile</a>
+                        <button id="logout-btn-dropdown" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700">Logout</button>
+                    </div>
                 </div>
             </div>
             <div class="flex items-center">
                 <button id="add-friends-open-modal" class="p-2 rounded-full themed-hover">
                      <svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                 </button>
+                 <button id="notifications-btn" class="p-2 rounded-full themed-hover relative">
+                    <svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <div id="notification-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></div>
+                </button>
             </div>
         </div>
-        <div class="flex items-center justify-between px-4 pt-4 pb-2">
-            <h2 class="text-xl font-bold themed-text-header">Chats</h2>
-            <button id="notifications-btn" class="p-2 rounded-full themed-hover relative">
-                <svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                <div id="notification-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></div>
-            </button>
+        <div class="px-4 pt-4 pb-2">
+             <h2 class="text-xl font-bold themed-text-header">Chats</h2>
         </div>
         <div id="user-list" class="flex-1 overflow-y-auto px-2"></div>
     </aside>
@@ -88,6 +91,7 @@
     <div id="modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden"></div>
     <div id="add-friends-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden"></div>
     <div id="notifications-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden"></div>
+    <div id="theme-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden"></div>
 
 
     <script type="module">
@@ -126,6 +130,10 @@
         const notificationsBtn = document.getElementById('notifications-btn');
         const notificationDot = document.getElementById('notification-dot');
         const mainChatArea = document.getElementById('main-chat-area');
+        const profileDropdownBtn = document.getElementById('profile-dropdown-btn');
+        const profileDropdown = document.getElementById('profile-dropdown');
+        const themeModalBtn = document.getElementById('theme-modal-btn');
+        const logoutDropdownBtn = document.getElementById('logout-btn-dropdown');
 
         let currentUser = null;
         let currentUserData = null;
@@ -157,39 +165,39 @@
         }
 
         function loadMyProfile(userData) {
-            const pfpElements = [
-                {img: document.getElementById('my-pfp'), initial: document.getElementById('my-pfp-initial')},
-                {img: myPfpSidebar, initial: myPfpInitialSidebar}
-            ];
-            pfpElements.forEach(({img, initial}) => {
-                if (userData.photoURL) {
-                    img.src = userData.photoURL;
-                    img.classList.remove('hidden');
-                    initial.classList.add('hidden');
-                } else {
-                    initial.textContent = (userData.displayName || '?').charAt(0).toUpperCase();
-                    initial.className = `w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${userData.pfpColor}`;
-                    img.classList.add('hidden');
-                    initial.classList.remove('hidden');
-                }
-            });
+            if (userData.photoURL) {
+                myPfpSidebar.src = userData.photoURL;
+                myPfpSidebar.classList.remove('hidden');
+                myPfpInitialSidebar.classList.add('hidden');
+            } else {
+                myPfpInitialSidebar.textContent = (userData.displayName || '?').charAt(0).toUpperCase();
+                myPfpInitialSidebar.className = `w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${userData.pfpColor}`;
+                myPfpSidebar.classList.add('hidden');
+                myPfpInitialSidebar.classList.remove('hidden');
+            }
         }
         
         toggleSidebar.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
+        logoutDropdownBtn.addEventListener('click', () => signOut(auth));
+
+        // --- Profile Dropdown ---
+        profileDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', () => profileDropdown.classList.add('hidden'));
 
         // --- Friend & User Management ---
         function listenForFriends() {
             const friendsRef = collection(db, `users/${currentUser.uid}/friends`);
-            onSnapshot(query(friendsRef, orderBy("displayName")), async (snapshot) => {
+            onSnapshot(query(friendsRef, orderBy("displayName")), (snapshot) => {
                 userList.innerHTML = '';
                 if (snapshot.empty) {
                     userList.innerHTML = `<div class="text-center p-4 themed-text-secondary">No friends yet. Click the icon above to find people.</div>`;
                     return;
                 }
                 friends = snapshot.docs.map(doc => doc.id);
-                for (const friendDoc of snapshot.docs) {
-                    renderUserInList(friendDoc.data());
-                }
+                snapshot.forEach(doc => renderUserInList(doc.data()));
             });
         }
 
@@ -197,12 +205,7 @@
             const userElement = document.createElement('div');
             userElement.className = 'p-2 flex items-center justify-between cursor-pointer themed-hover rounded-lg transition';
             
-            let pfpHtml = '';
-            if (userData.photoURL) {
-                pfpHtml = `<img src="${userData.photoURL}" class="w-12 h-12 rounded-full object-cover">`;
-            } else {
-                pfpHtml = `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white ${userData.pfpColor}">${(userData.displayName || '?').charAt(0).toUpperCase()}</div>`;
-            }
+            let pfpHtml = userData.photoURL ? `<img src="${userData.photoURL}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl text-white ${userData.pfpColor}">${(userData.displayName || '?').charAt(0).toUpperCase()}</div>`;
 
             userElement.innerHTML = `
                 <div class="flex items-center gap-4">
@@ -211,8 +214,7 @@
                         <p class="font-semibold themed-text-header">${userData.displayName}</p>
                         <p class="text-sm themed-text-secondary">New Chat</p>
                     </div>
-                </div>
-            `;
+                </div>`;
             userElement.addEventListener('click', () => startChat(userData));
             userList.appendChild(userElement);
         }
@@ -244,10 +246,13 @@
                 .map(doc => {
                     const user = doc.data();
                     let pfpHtml = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor}">${user.displayName.charAt(0).toUpperCase()}</div>`;
-                    return `<div class="p-2 flex items-center justify-between themed-hover rounded-lg" data-uid="${user.uid}" data-name="${user.displayName}">
+                    return `<div class="p-2 flex items-center justify-between themed-hover rounded-lg">
                                 <div class="flex items-center gap-3">
                                     ${pfpHtml}
-                                    <span class="font-semibold">${user.displayName}</span>
+                                    <div>
+                                        <p class="font-semibold">${user.displayName}</p>
+                                        <p class="text-xs text-gray-400">@${user.username}</p>
+                                    </div>
                                 </div>
                                 <button class="add-friend-btn text-sm bg-fuchsia-600 text-white px-3 py-1 rounded-md hover:bg-fuchsia-700" data-uid="${user.uid}">Add</button>
                             </div>`;
@@ -301,7 +306,7 @@
                  return `<div class="p-2 flex items-center justify-between">
                             <div class="flex items-center gap-3">${pfpHtml}<span>${req.displayName}</span></div>
                             <div class="flex gap-2">
-                                <button class="accept-req-btn text-sm bg-green-600 text-white px-3 py-1 rounded-md" data-id="${req.uid}" data-name="${req.displayName}">Accept</button>
+                                <button class="accept-req-btn text-sm bg-green-600 text-white px-3 py-1 rounded-md" data-id="${req.uid}">Accept</button>
                                 <button class="decline-req-btn text-sm bg-red-600 text-white px-3 py-1 rounded-md" data-id="${req.uid}">Decline</button>
                             </div>
                          </div>`;
@@ -313,27 +318,46 @@
             </div>`;
             openModal(notificationsModal);
 
-            notificationsModal.querySelectorAll('.accept-req-btn').forEach(btn => btn.addEventListener('click', async (e) => {
+            notificationsModal.querySelectorAll('.accept-req-btn, .decline-req-btn').forEach(btn => btn.addEventListener('click', async (e) => {
                 const friendId = e.target.dataset.id;
-                const friendDoc = await getDoc(doc(db, 'users', friendId));
-                if (!friendDoc.exists()) return;
-
-                const batch = writeBatch(db);
-                batch.set(doc(db, `users/${currentUser.uid}/friends/${friendId}`), friendDoc.data());
-                batch.set(doc(db, `users/${friendId}/friends/${currentUser.uid}`), currentUserData);
-                batch.delete(doc(db, `users/${currentUser.uid}/friendRequests/${friendId}`));
-                await batch.commit();
+                const isAccepting = e.target.classList.contains('accept-req-btn');
                 
-                closeModal(notificationsModal);
-            }));
-
-            notificationsModal.querySelectorAll('.decline-req-btn').forEach(btn => btn.addEventListener('click', async (e) => {
-                const friendId = e.target.dataset.id;
-                await deleteDoc(doc(db, `users/${currentUser.uid}/friendRequests/${friendId}`));
+                if (isAccepting) {
+                    const friendDoc = await getDoc(doc(db, 'users', friendId));
+                    if (friendDoc.exists()) {
+                        const batch = writeBatch(db);
+                        batch.set(doc(db, `users/${currentUser.uid}/friends/${friendId}`), friendDoc.data());
+                        batch.set(doc(db, `users/${friendId}/friends/${currentUser.uid}`), currentUserData);
+                        batch.delete(doc(db, `users/${currentUser.uid}/friendRequests/${friendId}`));
+                        await batch.commit();
+                    }
+                } else {
+                    await deleteDoc(doc(db, `users/${currentUser.uid}/friendRequests/${friendId}`));
+                }
                 closeModal(notificationsModal);
             }));
         });
         
+        // --- Theme Modal ---
+        themeModalBtn.addEventListener('click', () => {
+            const themeModal = document.getElementById('theme-modal');
+            themeModal.innerHTML = `<div class="themed-bg-darker border-transparent shadow-2xl rounded-2xl p-6 max-w-xs w-full" style="background-color: #181818;">
+                <h3 class="text-xl font-bold mb-4">Display Theme</h3>
+                <div class="space-y-2">
+                    <button class="theme-option-btn w-full text-left p-2 rounded-md themed-hover" data-theme="dark">Always Dark</button>
+                    <button class="theme-option-btn w-full text-left p-2 rounded-md themed-hover" data-theme="light">Always Light</button>
+                </div>
+            </div>`;
+            openModal(themeModal);
+            
+            themeModal.querySelectorAll('.theme-option-btn').forEach(btn => btn.addEventListener('click', async (e) => {
+                const newTheme = e.target.dataset.theme;
+                await updateDoc(doc(db, "users", currentUser.uid), { theme: newTheme });
+                applyTheme(newTheme);
+                closeModal(themeModal);
+            }));
+        });
+
         // --- Chat Logic ---
         function startChat(partnerData) {
             currentChatPartner = partnerData;
@@ -343,15 +367,10 @@
             messageInputContainer.classList.remove('hidden');
             chatMessages.innerHTML = ''; 
 
-            let pfpHtml = '';
-            if (partnerData.photoURL) {
-                pfpHtml = `<img src="${partnerData.photoURL}" class="w-10 h-10 rounded-full object-cover">`;
-            } else {
-                pfpHtml = `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${partnerData.pfpColor}">${(partnerData.displayName || '?').charAt(0).toUpperCase()}</div>`;
-            }
+            let pfpHtml = partnerData.photoURL ? `<img src="${partnerData.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${partnerData.pfpColor}">${(partnerData.displayName || '?').charAt(0).toUpperCase()}</div>`;
             chatHeaderPfp.innerHTML = pfpHtml;
 
-            if (window.innerWidth < 768) { // md breakpoint
+            if (window.innerWidth < 768) {
                 sidebar.classList.add('-translate-x-full');
             }
 
@@ -362,12 +381,17 @@
             const q = query(messagesRef, orderBy("timestamp"));
 
             unsubscribeMessages = onSnapshot(q, (snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const messageData = change.doc.data();
-                        displayMessage(messageData, change.doc.id, channelId);
-                    }
-                });
+                if(snapshot.empty) {
+                    chatMessages.innerHTML = `<div class="text-center p-4 themed-text-secondary">No messages yet. Say hello!</div>`;
+                } else {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === "added") {
+                            if (snapshot.size === 1) chatMessages.innerHTML = ''; // Clear "no messages" text
+                            const messageData = change.doc.data();
+                            displayMessage(messageData, change.doc.id, channelId);
+                        }
+                    });
+                }
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             });
         }
@@ -384,8 +408,7 @@
             messageElement.innerHTML = `
                 <div class="max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByMe ? 'rounded-br-lg' : 'rounded-bl-lg'} shadow-md">
                     <p class="text-sm">${message.text}</p>
-                </div>
-            `;
+                </div>`;
             chatMessages.appendChild(messageElement);
             
             if (!isSentByMe && !message.isRead) {
