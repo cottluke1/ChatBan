@@ -228,32 +228,23 @@
             document.querySelectorAll('.fixed.z-50').forEach(m => closeModal(m));
         });
 
-        // --- Add Friends Modal (NEW & IMPROVED) ---
+        // --- Add Friends Modal (REVISED & IMPROVED) ---
         addFriendsModalBtn.addEventListener('click', () => {
             const addFriendsModal = document.getElementById('add-friends-modal');
             addFriendsModal.innerHTML = `
-            <div class="themed-bg-darker border-transparent shadow-2xl rounded-2xl p-6 max-w-md w-full" style="background-color: #181818;" onclick="event.stopPropagation();">
+            <div class="themed-bg-darker border-transparent shadow-2xl rounded-2xl p-4 max-w-sm w-full" style="background-color: #181818;" onclick="event.stopPropagation();">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold">Add Friends</h3>
-                    <button id="close-friends-modal" class="p-2 -mr-2 rounded-full themed-hover text-2xl leading-none">&times;</button>
+                    <h3 class="text-xl font-bold px-2">Add Friends</h3>
+                    <button id="close-friends-modal" class="p-2 rounded-full themed-hover text-2xl leading-none">&times;</button>
                 </div>
                 
-                <div class="relative">
-                    <input type="text" id="user-search-input" placeholder="Search by username..." autocomplete="off" class="themed-input w-full pl-10 pr-4 py-2 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" style="background-color: #282828;">
-                    <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <div class="relative px-2">
+                    <input type="text" id="user-search-input" placeholder="Search..." autocomplete="off" class="themed-input w-full pl-10 pr-4 py-2 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" style="background-color: #282828;">
+                    <svg class="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
 
-                <div id="friend-requests-container" class="mt-6">
-                    <h4 class="font-bold text-sm text-gray-400 uppercase tracking-wider pb-2">Friend Requests</h4>
-                    <div id="friend-requests-list" class="max-h-40 overflow-y-auto space-y-1"></div>
-                </div>
-
-                <div id="user-search-results-container" class="mt-4">
-                    <h4 class="font-bold text-sm text-gray-400 uppercase tracking-wider pb-2">Search Results</h4>
-                    <div id="all-users-list" class="max-h-52 overflow-y-auto space-y-1">
-                        <p class="themed-text-secondary text-sm p-2">Start typing to find users.</p>
-                    </div>
-                </div>
+                <div id="friend-requests-list" class="mt-4 space-y-1 max-h-48 overflow-y-auto"></div>
+                <div id="all-users-list" class="mt-2 space-y-1 max-h-64 overflow-y-auto"></div>
             </div>`;
             openModal(addFriendsModal);
 
@@ -262,67 +253,59 @@
             const searchInput = document.getElementById('user-search-input');
             const requestsList = document.getElementById('friend-requests-list');
             const usersList = document.getElementById('all-users-list');
+            let allUsersCache = null;
 
             // 1. Load Friend Requests
             const requestsRef = collection(db, `users/${currentUser.uid}/friendRequests`);
             unsubscribeRequests = onSnapshot(query(requestsRef, orderBy('timestamp', 'desc')), (snapshot) => {
-                if (snapshot.empty) {
-                    requestsList.innerHTML = '<p class="themed-text-secondary text-sm p-2">No new friend requests.</p>';
-                    return;
-                }
                 requestsList.innerHTML = '';
+                if (snapshot.empty) return;
+
+                requestsList.innerHTML = '<h4 class="font-bold text-sm text-gray-400 uppercase tracking-wider p-2">Friend Requests</h4>';
                 snapshot.forEach(doc => {
                     const req = doc.data();
                     let pfp = req.photoURL ? `<img src="${req.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${req.pfpColor}">${req.displayName.charAt(0).toUpperCase()}</div>`;
                     const reqEl = document.createElement('div');
                     reqEl.className = "p-2 flex items-center justify-between rounded-lg themed-hover";
                     reqEl.innerHTML = `<div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div> <p class="font-semibold">${req.displayName}</p></div>
-                                     <div class="flex gap-2"><button class="accept-req-btn text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md" data-id="${req.uid}">Accept</button><button class="decline-req-btn text-sm bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded-md" data-id="${req.uid}">Decline</button></div>`;
+                                     <div class="flex gap-2"><button class="accept-req-btn text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md" data-id="${req.uid}">Accept</button></div>`;
                     requestsList.appendChild(reqEl);
                 });
             });
 
             // 2. Implement Search
-            let searchTimeout;
-            searchInput.addEventListener('input', () => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(async () => {
-                    const searchTerm = searchInput.value.trim();
-                    if (searchTerm.length < 2) {
-                        usersList.innerHTML = '<p class="themed-text-secondary text-sm p-2">Start typing to find users.</p>';
-                        return;
-                    }
+            searchInput.addEventListener('input', async () => {
+                const searchTerm = searchInput.value.trim().toLowerCase();
+                usersList.innerHTML = '';
+                if (searchTerm.length < 1) return;
+
+                if (!allUsersCache) {
                     usersList.innerHTML = '<p class="themed-text-secondary text-sm p-2">Searching...</p>';
+                    const usersSnapshot = await getDocs(collection(db, 'users'));
+                    allUsersCache = usersSnapshot.docs.map(doc => doc.data());
+                }
 
-                    const friendsSnap = await getDocs(collection(db, `users/${currentUser.uid}/friends`));
-                    const sentReqSnap = await getDocs(collection(db, `users/${currentUser.uid}/sentFriendRequests`));
-                    const receivedReqSnap = await getDocs(collection(db, `users/${currentUser.uid}/friendRequests`));
-                    const excludedIds = new Set([currentUser.uid, ...friendsSnap.docs.map(d=>d.id), ...sentReqSnap.docs.map(d=>d.id), ...receivedReqSnap.docs.map(d=>d.id)]);
+                const friendsSnap = await getDocs(collection(db, `users/${currentUser.uid}/friends`));
+                const sentReqSnap = await getDocs(collection(db, `users/${currentUser.uid}/sentFriendRequests`));
+                const receivedReqSnap = await getDocs(collection(db, `users/${currentUser.uid}/friendRequests`));
+                const excludedIds = new Set([currentUser.uid, ...friendsSnap.docs.map(d=>d.id), ...sentReqSnap.docs.map(d=>d.id), ...receivedReqSnap.docs.map(d=>d.id)]);
 
-                    const usersRef = collection(db, 'users');
-                    const qUsername = query(usersRef, where('username', '>=', searchTerm.toLowerCase()), where('username', '<=', searchTerm.toLowerCase() + '\uf8ff'));
-                    const qDisplayName = query(usersRef, where('displayName', '>=', searchTerm), where('displayName', '<=', searchTerm + '\uf8ff'));
-                    
-                    const [usernameResults, displayNameResults] = await Promise.all([getDocs(qUsername), getDocs(qDisplayName)]);
-                    const results = new Map();
-                    [...usernameResults.docs, ...displayNameResults.docs].forEach(doc => {
-                        if (!excludedIds.has(doc.id)) results.set(doc.id, doc.data());
-                    });
+                const results = allUsersCache.filter(user => !excludedIds.has(user.uid) && (user.username.toLowerCase().includes(searchTerm) || user.displayName.toLowerCase().includes(searchTerm)));
 
-                    if (results.size === 0) {
-                        usersList.innerHTML = '<p class="themed-text-secondary text-sm p-2">No users found.</p>';
-                        return;
-                    }
-                    usersList.innerHTML = '';
-                    results.forEach(user => {
-                        let pfp = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor}">${user.displayName.charAt(0).toUpperCase()}</div>`;
-                        const userEl = document.createElement('div');
-                        userEl.className = "p-2 flex items-center justify-between themed-hover rounded-lg";
-                        userEl.innerHTML = `<div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${user.displayName}</p><p class="text-xs text-gray-400">@${user.username}</p></div></div>
-                                          <button class="add-friend-btn text-sm bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-3 py-1 rounded-md" data-uid="${user.uid}">Add</button>`;
-                        usersList.appendChild(userEl);
-                    });
-                }, 300);
+                if (results.length === 0) {
+                    usersList.innerHTML = '<p class="themed-text-secondary text-sm p-2">No users found.</p>';
+                    return;
+                }
+
+                usersList.innerHTML = '<h4 class="font-bold text-sm text-gray-400 uppercase tracking-wider p-2">Search Results</h4>';
+                results.forEach(user => {
+                    let pfp = user.photoURL ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${user.pfpColor}">${user.displayName.charAt(0).toUpperCase()}</div>`;
+                    const userEl = document.createElement('div');
+                    userEl.className = "p-2 flex items-center justify-between themed-hover rounded-lg";
+                    userEl.innerHTML = `<div class="flex items-center gap-3"><div class="flex-shrink-0">${pfp}</div><div><p class="font-semibold">${user.displayName}</p><p class="text-xs text-gray-400">@${user.username}</p></div></div>
+                                      <button class="add-friend-btn text-sm bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-3 py-1 rounded-md" data-uid="${user.uid}">Add</button>`;
+                    usersList.appendChild(userEl);
+                });
             });
 
             // 3. Event Delegation for buttons
@@ -333,17 +316,13 @@
                     await sendFriendRequest(target.dataset.uid);
                     target.textContent = 'Sent';
                     target.classList.replace('bg-fuchsia-600', 'bg-gray-500');
-                    target.classList.remove('hover:bg-fuchsia-700');
-                } else if (target.matches('.accept-req-btn, .decline-req-btn')) {
+                } else if (target.matches('.accept-req-btn')) {
                     const friendId = target.dataset.id;
-                    const isAccepting = target.classList.contains('accept-req-btn');
                     const batch = writeBatch(db);
-                    if (isAccepting) {
-                        const friendDoc = await getDoc(doc(db, 'users', friendId));
-                        if (friendDoc.exists()) {
-                            batch.set(doc(db, `users/${currentUser.uid}/friends/${friendId}`), friendDoc.data());
-                            batch.set(doc(db, `users/${friendId}/friends/${currentUser.uid}`), currentUserData);
-                        }
+                    const friendDoc = await getDoc(doc(db, 'users', friendId));
+                    if (friendDoc.exists()) {
+                        batch.set(doc(db, `users/${currentUser.uid}/friends/${friendId}`), friendDoc.data());
+                        batch.set(doc(db, `users/${friendId}/friends/${currentUser.uid}`), currentUserData);
                     }
                     batch.delete(doc(db, `users/${currentUser.uid}/friendRequests/${friendId}`));
                     batch.delete(doc(db, `users/${friendId}/sentFriendRequests/${currentUser.uid}`));
