@@ -363,14 +363,26 @@
             const messageElement = document.createElement('div');
             messageElement.id = message.id;
             
-            let radiusClasses = 'rounded-3xl';
+            let radiusClasses = 'rounded-3xl'; // single message default
+
             if (isFirst && !isLast) {
-                radiusClasses = isSentByMe ? 'rounded-t-3xl rounded-b-md rounded-bl-3xl' : 'rounded-t-3xl rounded-b-md rounded-br-3xl';
+              // top of a group
+              radiusClasses = isSentByMe
+                ? 'rounded-3xl rounded-br-md'       // right side: small inner bottom-right
+                : 'rounded-3xl rounded-bl-md';      // left side: small inner bottom-left
             } else if (!isFirst && !isLast) {
-                radiusClasses = isSentByMe ? 'rounded-md rounded-l-3xl' : 'rounded-md rounded-r-3xl';
+              // middle of a group
+              radiusClasses = isSentByMe
+                ? 'rounded-3xl rounded-tr-md rounded-br-md' // small inner right corners
+                : 'rounded-3xl rounded-tl-md rounded-bl-md'; // small inner left corners
             } else if (!isFirst && isLast) {
-                radiusClasses = isSentByMe ? 'rounded-t-md rounded-b-3xl rounded-l-3xl' : 'rounded-t-md rounded-b-3xl rounded-r-3xl';
+              // bottom of a group (your problem case)
+              radiusClasses = isSentByMe
+                ? 'rounded-3xl rounded-tr-md'        // mirror of top: only inner top-right small
+                : 'rounded-3xl rounded-tl-md';        // only inner top-left small
             }
+            // (isFirst && isLast) falls through to 'rounded-3xl'
+
 
             let bubbleContentHtml = '';
             if (message.type === 'image') {
