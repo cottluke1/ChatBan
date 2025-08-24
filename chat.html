@@ -13,6 +13,15 @@
         #chat-messages::-webkit-scrollbar-thumb, #user-list::-webkit-scrollbar-thumb, #popover-content::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 20px; }
         .sidebar { transition: transform 0.3s ease-in-out; }
         #chat-messages { background-size: cover; background-position: center; }
+
+        /* Animation for new messages */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message-animate-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden text-gray-200">
@@ -59,25 +68,45 @@
         <div id="user-list" class="flex-1 overflow-y-auto px-2"></div>
     </aside>
 
-    <main id="main-chat-area" class="flex-1 flex-col themed-bg hidden md:flex" style="background-color: #121212;">
-        <header class="themed-bg backdrop-blur-xl h-20 flex-shrink-0 px-6 flex items-center justify-between themed-shadow z-20" style="background-color: #181818; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5);">
+    <main id="main-chat-area" class="flex-1 flex flex-col themed-bg" style="background-color: #121212;">
+        
+        <div id="chat-placeholder" class="flex-1 flex-col items-center justify-center text-center p-12 hidden md:flex">
+            <svg class="w-24 h-24 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+            <h2 class="mt-6 text-2xl font-semibold text-gray-400">Select a chat to start messaging</h2>
+            <p class="mt-2 text-gray-500">Or search for a new friend to begin a conversation.</p>
+        </div>
+
+        <header id="chat-header" class="themed-bg backdrop-blur-xl h-20 flex-shrink-0 px-6 items-center justify-between themed-shadow z-20 hidden" style="background-color: #181818; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5);">
             <div class="flex items-center gap-4">
                 <button id="toggle-sidebar" class="p-2 rounded-md themed-hover lg:hidden"><svg class="w-6 h-6 themed-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
                 <div id="chat-header-pfp"></div>
-                <h3 id="chat-with-name" class="text-xl font-semibold themed-text-header">Select a chat</h3>
+                <h3 id="chat-with-name" class="text-xl font-semibold themed-text-header"></h3>
                 <button id="edit-theme-btn" class="p-2 rounded-md hover:bg-gray-700 hidden"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
             </div>
         </header>
-        <div id="main-content" class="flex-1 flex flex-col relative">
+
+        <div id="main-content" class="flex-1 flex flex-col relative min-h-0 hidden">
             <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
             <div id="message-input-area" class="themed-bg backdrop-blur-xl p-4 themed-shadow" style="background-color: #181818; box-shadow: 0 -1px 2px 0 rgba(0, 0, 0, 0.5);">
-                <div id="reply-preview-bar" class="hidden items-center justify-between p-2 mb-2 bg-gray-900/50 rounded-lg text-sm"><div class="border-l-2 border-purple-500 pl-2"><p class="font-bold text-purple-400">Replying to a message</p><p id="reply-preview-text" class="text-gray-300 truncate"></p></div><button id="cancel-reply-btn" class="p-1 rounded-full hover:bg-gray-700">&times;</button></div>
+                <div id="reply-preview-bar" class="hidden items-center justify-between p-2 mb-2 bg-gray-900/50 rounded-lg text-sm"><div class="border-l-2 border-purple-500 pl-2"><p class="font-bold text-purple-400">Replying to a message</p><p id="reply-preview-text" class="text-gray-300 truncate"></p></div><button id="cancel-reply-btn" class="p-1 rounded-full hover:bg-gray-700 text-xl leading-none">&times;</button></div>
                 <form id="message-form" class="flex items-center space-x-4"><input id="message-input" type="text" placeholder="Type a message..." autocomplete="off" class="themed-input flex-1 w-full px-5 py-3 border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500" style="background-color: #282828;"><button type="submit" class="p-3 bg-gradient-to-r from-fuchsia-500 to-purple-500 rounded-full text-white hover:scale-110 transform transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></button></form>
             </div>
         </div>
     </main>
     
-    <div id="message-actions-popover" class="hidden absolute bg-gray-800 rounded-lg shadow-xl z-50 text-white text-sm"><div id="react-palette" class="hidden p-1 gap-1"><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">👍</button><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">👎</button><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">❤️</button><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">😂</button><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">❗</button><button class="react-emoji-btn p-1.5 text-lg rounded-full hover:bg-gray-700">❓</button></div><div id="main-actions" class="flex flex-col py-1"><button id="action-reply" class="text-left px-3 py-1.5 hover:bg-gray-700">Reply</button><button id="action-react" class="text-left px-3 py-1.5 hover:bg-gray-700">React</button><button id="action-delete" class="text-left px-3 py-1.5 text-red-400 hover:bg-gray-700">Delete</button></div></div>
+    <div id="message-actions-popover" class="hidden absolute z-50">
+        <div class="actions-container bg-gray-900/80 backdrop-blur-md rounded-full shadow-xl flex items-center p-1 space-x-1 border border-gray-700/50">
+            <button class="react-emoji-btn text-2xl p-1 rounded-full hover:bg-gray-700 transform hover:scale-125 transition">❤️</button>
+            <button class="react-emoji-btn text-2xl p-1 rounded-full hover:bg-gray-700 transform hover:scale-125 transition">👍</button>
+            <button class="react-emoji-btn text-2xl p-1 rounded-full hover:bg-gray-700 transform hover:scale-125 transition">👎</button>
+            <button class="react-emoji-btn text-2xl p-1 rounded-full hover:bg-gray-700 transform hover:scale-125 transition">😂</button>
+            <button class="react-emoji-btn text-2xl p-1 rounded-full hover:bg-gray-700 transform hover:scale-125 transition">⁉️</button>
+            <div class="w-px h-6 bg-gray-600 mx-1"></div>
+            <button id="action-reply" title="Reply" class="p-2 rounded-full hover:bg-gray-700"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg></button>
+            <button id="action-delete" title="Delete" class="p-2 rounded-full hover:bg-gray-700"><svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg></button>
+        </div>
+    </div>
+
     <div id="theme-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden"><div class="bg-gray-800 rounded-lg p-6 w-full max-w-sm"><h3 class="text-lg font-bold mb-4">Edit Chat Theme</h3><div class="space-y-4"><div><label class="block text-sm font-medium text-gray-400">Chat Background</label><input type="file" id="background-upload-input" accept="image/*" class="mt-1 text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700"/></div><div><label class="block text-sm font-medium text-gray-400">My Bubble Color</label><input type="color" id="my-bubble-color-input" value="#7c3aed" class="w-full h-10 p-1 bg-gray-700 rounded-md cursor-pointer"></div><div><label class="block text-sm font-medium text-gray-400">Friend's Bubble Color</label><input type="color" id="friend-bubble-color-input" value="#374151" class="w-full h-10 p-1 bg-gray-700 rounded-md cursor-pointer"></div></div><div class="mt-6 flex justify-end gap-3"><button id="close-theme-modal-btn" class="px-4 py-2 bg-gray-600 rounded-md text-sm font-semibold">Cancel</button><button id="save-theme-btn" class="px-4 py-2 bg-purple-600 rounded-md text-sm font-semibold">Save</button></div></div></div>
 
     <script type="module">
@@ -95,6 +124,9 @@
         // --- All DOM elements ---
         const userList = document.getElementById('user-list');
         const mainChatArea = document.getElementById('main-chat-area');
+        const chatPlaceholder = document.getElementById('chat-placeholder');
+        const chatHeader = document.getElementById('chat-header');
+        const mainContent = document.getElementById('main-content');
         const chatWithName = document.getElementById('chat-with-name');
         const chatHeaderPfp = document.getElementById('chat-header-pfp');
         const chatMessages = document.getElementById('chat-messages');
@@ -148,12 +180,17 @@
                 });
                 if (relationshipsUnsubscribe) relationshipsUnsubscribe();
                 listenForRelationships();
+                // Initially show the placeholder if no chat is selected
+                if (!currentChatPartner) {
+                    chatPlaceholder.classList.remove('hidden');
+                    chatPlaceholder.classList.add('md:flex');
+                }
             } else {
                 window.location.href = './login.html';
             }
         });
         
-        // --- Sidebar & Friend List Logic ---
+        // --- Sidebar & Friend List Logic (Unchanged) ---
         function loadMyProfile(userData) {
             if (userData.photoURL) {
                 myPfpSidebar.src = userData.photoURL;
@@ -284,9 +321,7 @@
                 batch.update(doc(db, `users/${currentUser.uid}/relationships/${friendId}`), { status: 'friends', timestamp });
                 batch.update(doc(db, `users/${friendId}/relationships/${currentUser.uid}`), { status: 'friends', timestamp });
                 await batch.commit();
-            } catch (error) {
-                console.error("Error accepting friend request:", error);
-            }
+            } catch (error) { console.error("Error accepting friend request:", error); }
         }
 
         async function sendFriendRequest(recipientId) {
@@ -296,9 +331,7 @@
                 batch.set(doc(db, `users/${currentUser.uid}/relationships/${recipientId}`), { status: 'sent', uid: recipientId, timestamp });
                 batch.set(doc(db, `users/${recipientId}/relationships/${currentUser.uid}`), { status: 'received', uid: currentUser.uid, timestamp });
                 await batch.commit();
-            } catch (error) {
-                console.error("Error sending friend request:", error);
-            }
+            } catch (error) { console.error("Error sending friend request:", error); }
         }
         
         async function initializePopover() {
@@ -367,10 +400,29 @@
         }
         
         // --- Chat Logic ---
+        /**
+         * A utility function to smoothly scroll the chat window to the bottom.
+         * Only force-scrolls if the user is already near the bottom.
+         */
+        function scrollToBottom(force = false) {
+            const isScrolledNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 150;
+            if (force || isScrolledNearBottom) {
+                setTimeout(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 0);
+            }
+        }
+        
         async function startChat(partnerData) {
             currentChatPartner = partnerData;
-            mainChatArea.classList.remove('hidden');
-            mainChatArea.classList.add('flex');
+
+            // Update UI to show chat interface and hide placeholder
+            chatPlaceholder.classList.add('hidden');
+            chatHeader.classList.remove('hidden');
+            chatHeader.classList.add('flex');
+            mainContent.classList.remove('hidden');
+            mainContent.classList.add('flex');
+
             chatWithName.textContent = partnerData.displayName;
             editThemeBtn.classList.remove('hidden');
             chatMessages.innerHTML = '';
@@ -386,11 +438,13 @@
             const channelId = [currentUser.uid, partnerData.uid].sort().join('_');
             const messagesRef = collection(db, "chats", channelId, "messages");
             if (messagesUnsubscribe) messagesUnsubscribe();
+
+            let isInitialLoad = true;
             messagesUnsubscribe = onSnapshot(query(messagesRef, orderBy("timestamp")), (snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     const messageData = { id: change.doc.id, ...change.doc.data() };
                     if (change.type === "added") {
-                        displayMessage(messageData);
+                        displayMessage(messageData, isInitialLoad);
                         if (messageData.from !== currentUser.uid && !messageData.readBy?.includes(currentUser.uid)) {
                             updateDoc(doc(db, "chats", channelId, "messages", change.doc.id), {
                                 readBy: arrayUnion(currentUser.uid)
@@ -400,34 +454,42 @@
                     if (change.type === "modified") updateMessage(messageData);
                     if (change.type === "removed") document.getElementById(change.doc.id)?.remove();
                 });
-                if (chatMessages.scrollHeight > chatMessages.clientHeight) {
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
+                scrollToBottom(!isInitialLoad); // Force scroll on new messages, not initial load
+                isInitialLoad = false;
             });
         }
 
-        function displayMessage(message) {
+        function displayMessage(message, isInitial = false) {
             const isSentByMe = message.from === currentUser.uid;
             const messageElement = document.createElement('div');
             messageElement.id = message.id;
-            messageElement.className = `w-full flex items-end gap-2 group relative ${isSentByMe ? 'justify-end' : 'justify-start'}`;
+            // Add animation class only for non-initial messages
+            const animationClass = isInitial ? '' : 'message-animate-in';
+            messageElement.className = `w-full flex items-end gap-2 group relative ${isSentByMe ? 'justify-end' : 'justify-start'} ${animationClass}`;
             
-            const bubble = document.createElement('div');
-            bubble.style.backgroundColor = isSentByMe ? currentTheme.myBubbleColor : currentTheme.friendBubbleColor;
-            bubble.className = `max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByMe ? 'rounded-br-lg' : 'rounded-bl-lg'} shadow-md text-white`;
+            // Format timestamp
+            const timestamp = message.timestamp ? message.timestamp.toDate().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
             
+            // Reply content
             let replyHtml = message.replyToText ? `<div class="mb-2 p-2 border-l-2 border-white/30 bg-white/10 rounded-md"><p class="text-xs text-gray-200 break-words">${message.replyToText}</p></div>` : '';
-            bubble.innerHTML = `${replyHtml}<p class="text-sm break-words">${message.text}</p>`;
-            
-            const reactionsContainer = document.createElement('div');
-            reactionsContainer.className = 'reactions-container absolute -bottom-4 flex gap-1';
-            
-            messageElement.appendChild(bubble);
-            bubble.insertAdjacentElement('afterend', reactionsContainer);
+
+            // Construct the message bubble
+            const bubbleHtml = `
+                <div class="bubble-content max-w-xs md:max-w-md p-3 rounded-2xl ${isSentByMe ? 'rounded-br-lg' : 'rounded-bl-lg'} shadow-md text-white" style="background-color: ${isSentByMe ? currentTheme.myBubbleColor : currentTheme.friendBubbleColor};">
+                    ${replyHtml}
+                    <p class="text-sm break-words">${message.text}</p>
+                    <div class="text-xs text-right mt-1 ${isSentByMe ? 'text-gray-200/70' : 'text-gray-300/70'}">${timestamp}</div>
+                </div>`;
+
+            // Reactions container
+            const reactionsContainer = `<div class="reactions-container absolute -bottom-4 flex gap-1 z-10"></div>`;
+
+            messageElement.innerHTML = bubbleHtml + reactionsContainer;
+
             messageElement.addEventListener('dblclick', (e) => showActionsPopover(e, message));
             
             chatMessages.appendChild(messageElement);
-            updateMessage(message);
+            updateMessage(message); // To render initial reactions
         }
 
         function updateMessage(message) {
@@ -466,18 +528,35 @@
         function showActionsPopover(event, message) {
             event.stopPropagation();
             popover.classList.remove('hidden');
-            document.getElementById('react-palette').style.display = 'none';
-            document.getElementById('main-actions').style.display = 'flex';
             popover.dataset.messageId = message.id;
             popover.dataset.messageText = message.text;
+            
+            // Toggle delete button visibility based on who sent the message
             document.getElementById('action-delete').style.display = message.from === currentUser.uid ? 'block' : 'none';
             
-            popover.className = `absolute bg-gray-900 rounded-lg shadow-xl z-50 text-white text-sm border border-gray-700`;
+            // Positioning Logic
+            const messageBubble = event.currentTarget.querySelector('.bubble-content');
+            const bubbleRect = messageBubble.getBoundingClientRect();
+            const chatRect = mainChatArea.getBoundingClientRect(); // Use main chat area as boundary
 
-            const rect = event.currentTarget.getBoundingClientRect();
-            const popoverHeight = popover.offsetHeight;
-            popover.style.top = `${rect.top - popoverHeight - 10}px`;
-            popover.style.left = `${rect.left + rect.width / 2 - popover.offsetWidth / 2}px`;
+            // Center the popover horizontally with the message bubble
+            let left = bubbleRect.left + bubbleRect.width / 2 - popover.offsetWidth / 2;
+            // Prevent it from going off the left edge of the screen
+            left = Math.max(chatRect.left + 8, left);
+            // Prevent it from going off the right edge of the screen
+            left = Math.min(left, chatRect.right - popover.offsetWidth - 8);
+
+            // Position it above the message bubble by default
+            let top = bubbleRect.top - popover.offsetHeight - 8; // 8px margin
+            // If there's no space above, position it below
+            if (top < chatRect.top) {
+                top = bubbleRect.bottom + 8;
+            }
+
+            popover.style.left = `${left}px`;
+            popover.style.top = `${top}px`;
+            
+            // Add a one-time event listener to the document to hide the popover
             setTimeout(() => document.addEventListener('click', hidePopover, { once: true }), 0);
         }
 
@@ -485,9 +564,10 @@
         document.getElementById('action-reply').addEventListener('click', () => { replyState = { active: true, messageId: popover.dataset.messageId, text: popover.dataset.messageText }; replyPreviewText.textContent = replyState.text; replyPreviewBar.classList.remove('hidden'); messageInput.focus(); hidePopover(); });
         cancelReplyBtn.addEventListener('click', cancelReply);
         function cancelReply() { replyState = { active: false, messageId: null, text: null }; replyPreviewBar.classList.add('hidden'); }
-        document.getElementById('action-react').addEventListener('click', () => { document.getElementById('react-palette').style.display = 'flex'; document.getElementById('main-actions').style.display = 'none'; });
+        
         document.querySelectorAll('.react-emoji-btn').forEach(button => {
-            button.addEventListener('click', async () => {
+            button.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Prevent the hidePopover listener from firing immediately
                 const messageId = popover.dataset.messageId;
                 const emoji = button.textContent;
                 const channelId = [currentUser.uid, currentChatPartner.uid].sort().join('_');
@@ -495,6 +575,7 @@
                 hidePopover();
             });
         });
+
         document.getElementById('action-delete').addEventListener('click', async () => {
             if (confirm('Are you sure you want to delete this message?')) {
                 const messageId = popover.dataset.messageId;
@@ -535,29 +616,15 @@
         function applyTheme(theme) { currentTheme = theme; chatMessages.style.backgroundImage = theme.backgroundImage === 'none' ? 'none' : `url(${theme.backgroundImage})`; }
         
         // --- Utility Listeners ---
-        addFriendsPopoverBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            addFriendsPopover.classList.toggle('hidden');
-            if (!addFriendsPopover.classList.contains('hidden')) {
-                initializePopover();
-            }
-        });
+        addFriendsPopoverBtn.addEventListener('click', (e) => { e.stopPropagation(); addFriendsPopover.classList.toggle('hidden'); if (!addFriendsPopover.classList.contains('hidden')) { initializePopover(); } });
         toggleSidebar.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
         logoutDropdownBtn.addEventListener('click', () => signOut(auth));
-        profileDropdownBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            profileDropdown.classList.toggle('hidden');
-        });
+        profileDropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); profileDropdown.classList.toggle('hidden'); });
         document.addEventListener('click', (e) => { 
             if (!addFriendsPopover.classList.contains('hidden') && !addFriendsPopoverBtn.contains(e.target) && !addFriendsPopover.contains(e.target)) { addFriendsPopover.classList.add('hidden'); } 
-            if (!profileDropdown.classList.contains('hidden') && !profileDropdownBtn.contains(e.target)) { profileDropdown.classList.add('hidden'); } 
+            if (!profileDropdown.classList.contains('hidden') && !profileDropdownBtn.contains(e.target) && !profileDropdown.contains(e.target)) { profileDropdown.classList.add('hidden'); } 
         });
-        friendFilterInput.addEventListener('input', (e) => { 
-            const searchTerm = e.target.value.toLowerCase(); 
-            userList.querySelectorAll('[data-search-name]').forEach(userElement => { 
-                userElement.style.display = userElement.getAttribute('data-search-name').includes(searchTerm) ? 'flex' : 'none'; 
-            }); 
-        });
+        friendFilterInput.addEventListener('input', (e) => { const searchTerm = e.target.value.toLowerCase(); userList.querySelectorAll('[data-search-name]').forEach(userElement => { userElement.style.display = userElement.getAttribute('data-search-name').includes(searchTerm) ? 'flex' : 'none'; }); });
     </script>
 </body>
 </html>
