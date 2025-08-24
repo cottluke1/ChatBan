@@ -369,7 +369,8 @@
               // top of a group
               radiusClasses = isSentByMe
                 ? 'rounded-3xl rounded-br-md'       // right side: small inner bottom-right
-                : 'rounded-3xl rounded-bl-md';      // left side: small inner bottom-left
+                : 'rounded-3xl rounded-bl-md'
+                : 'rounded-3xl rounded-tl-md';      // left side: small inner bottom-left
             } else if (!isFirst && !isLast) {
               // middle of a group
               radiusClasses = isSentByMe
