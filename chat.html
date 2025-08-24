@@ -365,11 +365,11 @@
             
             let radiusClasses = 'rounded-3xl';
             if (isFirst && !isLast) {
-                radiusClasses = isSentByMe ? 'rounded-tl-3xl rounded-tr-md rounded-b-3xl rounded-l-3xl' : 'rounded-tr-3xl rounded-tl-md rounded-b-3xl rounded-r-3xl';
+                radiusClasses = isSentByMe ? 'rounded-t-md rounded-b-3xl rounded-l-3xl' : 'rounded-t-md rounded-b-3xl rounded-r-3xl';
             } else if (!isFirst && !isLast) {
                 radiusClasses = isSentByMe ? 'rounded-md rounded-l-3xl' : 'rounded-md rounded-r-3xl';
             } else if (!isFirst && isLast) {
-                radiusClasses = isSentByMe ? 'rounded-t-md rounded-b-3xl rounded-l-3xl' : 'rounded-t-md rounded-b-3xl rounded-r-3xl';
+                radiusClasses = isSentByMe ? 'rounded-t-md rounded-b-3xl rounded-r-3xl' : 'rounded-t-md rounded-b-3xl rounded-l-3xl';
             }
 
             let bubbleContentHtml = '';
